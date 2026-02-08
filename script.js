@@ -1,7 +1,7 @@
 // Double Jeopardy Dashboard (CSV-powered)
 // Uses Plotly + PapaParse. Designed to work on GitHub Pages.
 
-// ---------- DOM safety helpers (prevents null textContent crashes) ----------
+// ---------- DOM helpers ----------
 function $(id) { return document.getElementById(id); }
 function setText(id, value) { const el = $(id); if (el) el.textContent = value; }
 
@@ -29,7 +29,7 @@ function loadCSV(path) {
   });
 }
 
-// ---------- Utility: percentile ----------
+// ---------- Percentile helper ----------
 function percentile(values, p) {
   const arr = values.filter(v => Number.isFinite(v)).sort((a,b) => a-b);
   if (arr.length === 0) return NaN;
@@ -40,25 +40,36 @@ function percentile(values, p) {
   return arr[lo] + (arr[hi] - arr[lo]) * (idx - lo);
 }
 
-// ---------- Aggregation: 5-year average per county ----------
+// ---------- Aggregate 5-year average per county ----------
 function aggregateFiveYear(rows) {
   const map = new Map();
 
   for (const r of rows) {
     const state = String(r['State'] ?? '').trim();
     const county = String(r['County'] ?? '').trim();
+
     const med = Number(r['Median AQI']);
     const mx = Number(r['Max AQI']);
+
+    const ufs = Number(r['Unhealthy for Sensitive Groups Days']);
+    const un  = Number(r['Unhealthy Days']);
+    const vun = Number(r['Very Unhealthy Days']);
+    const haz = Number(r['Hazardous Days']);
 
     if (!state || !county) continue;
     if (!Number.isFinite(med) || !Number.isFinite(mx)) continue;
 
     const key = state + '|' + county;
-    if (!map.has(key)) map.set(key, { State: state, County: county, medSum: 0, maxSum: 0, n: 0 });
+    if (!map.has(key)) {
+      map.set(key, { State: state, County: county, medSum: 0, maxSum: 0, n: 0, anomalySum: 0 });
+    }
     const obj = map.get(key);
     obj.medSum += med;
     obj.maxSum += mx;
     obj.n += 1;
+
+    const anomalyDays = (Number.isFinite(ufs)?ufs:0) + (Number.isFinite(un)?un:0) + (Number.isFinite(vun)?vun:0) + (Number.isFinite(haz)?haz:0);
+    obj.anomalySum += anomalyDays;
   }
 
   const out = [];
@@ -67,7 +78,8 @@ function aggregateFiveYear(rows) {
       State: obj.State,
       County: obj.County,
       MedianAQI_5yr: obj.medSum / obj.n,
-      MaxAQI_5yr: obj.maxSum / obj.n
+      MaxAQI_5yr: obj.maxSum / obj.n,
+      HighAQIDays_5yr: obj.anomalySum
     });
   }
   return out;
@@ -87,7 +99,7 @@ function applyScope(counties, scope) {
   return counties;
 }
 
-// ---------- Categorize risk ----------
+// ---------- Risk classification (fixed 90th percentile thresholds) ----------
 function classify(counties, thrMedian, thrMax) {
   return counties.map(d => {
     const chronic = d.MedianAQI_5yr >= thrMedian;
@@ -107,37 +119,36 @@ const COLORS = {
   'Low Risk': '#b8c1cc',
   'High Chronic': '#ff8a3d',
   'High Acute': '#ff4d5e',
-  'Double Jeopardy': '#b16cff'
+  'Double Jeopardy': '#b16cff',
+  'Livable': '#5dd6a7'
 };
 
-// ---------- Charts ----------
-function renderStateBars(divId, title, states, values, yTitle, color) {
-  Plotly.newPlot(divId, [{
-    type: 'bar',
-    x: states,
-    y: values,
-    marker: { color },
-    hovertemplate: '<b>%{x}</b><br>' + yTitle + ': %{y:.1f}<extra></extra>'
-  }], {
+// ---------- Outlier handling ----------
+// Exclude known extreme outliers from the scatter plot only (does not affect thresholds/KPIs).
+const SCATTER_EXCLUDE = [
+  { state: 'california', county: 'mono' }
+];
+
+function isScatterExcluded(row) {
+  const st = String(row.State || '').trim().toLowerCase();
+  const ct = String(row.County || '').trim().toLowerCase();
+  return SCATTER_EXCLUDE.some(o => o.state === st && o.county === ct);
+}
+
+function commonLayout(title, extra = {}) {
+  return {
     title: { text: title, font: { color: '#e8ecf3' } },
     paper_bgcolor: 'rgba(0,0,0,0)',
     plot_bgcolor: 'rgba(0,0,0,0)',
     font: { color: '#e8ecf3' },
-    xaxis: {
-      title: 'State',
-      tickangle: 60,
-      gridcolor: 'rgba(255,255,255,0.10)'
-    },
-    yaxis: {
-      title: yTitle,
-      gridcolor: 'rgba(255,255,255,0.10)'
-    },
-    margin: { l: 70, r: 20, t: 70, b: 120 },
-    height: 520
-  }, { responsive: true, displayModeBar: true });
+    ...extra
+  };
 }
 
-function renderHorizontalBar(divId, title, labels, values, xTitle, color) {
+function renderTopCounties(divId, title, rows, valueKey, xTitle, color) {
+  const labels = rows.map(d => `${d.County}, ${d.State}`).reverse();
+  const values = rows.map(d => d[valueKey]).reverse();
+
   Plotly.newPlot(divId, [{
     type: 'bar',
     orientation: 'h',
@@ -145,39 +156,37 @@ function renderHorizontalBar(divId, title, labels, values, xTitle, color) {
     y: labels,
     marker: { color },
     hovertemplate: '<b>%{y}</b><br>' + xTitle + ': %{x:.1f}<extra></extra>'
-  }], {
-    title: { text: title, font: { color: '#e8ecf3' } },
-    paper_bgcolor: 'rgba(0,0,0,0)',
-    plot_bgcolor: 'rgba(0,0,0,0)',
-    font: { color: '#e8ecf3' },
+  }], commonLayout(title, {
     xaxis: { title: xTitle, gridcolor: 'rgba(255,255,255,0.10)' },
     yaxis: { gridcolor: 'rgba(255,255,255,0.10)' },
     margin: { l: 190, r: 20, t: 70, b: 50 },
     height: 560
-  }, { responsive: true, displayModeBar: true });
+  }), { responsive: true, displayModeBar: true, displaylogo: false });
 }
 
-function buildTop5Text(counties, state) {
-  const rows = counties.filter(d => d.State === state);
-  if (!rows.length) return 'No data for this state.';
+function renderLivable(divId, rows) {
+  const labels = rows.map(d => `${d.County}, ${d.State}`).reverse();
+  const values = rows.map(d => d.MedianAQI_5yr).reverse();
 
-  const topChronic = [...rows].sort((a,b) => b.MedianAQI_5yr - a.MedianAQI_5yr).slice(0,5);
-  const topAcute = [...rows].sort((a,b) => b.MaxAQI_5yr - a.MaxAQI_5yr).slice(0,5);
-
-  const fmtList = (arr, key) => arr.map((d,i) => `${i+1}. ${d.County} (${d[key].toFixed(1)})`).join('<br>');
-
-  return (
-    `<b>${state}</b><br>` +
-    `<span style="color:${COLORS['High Chronic']}; font-weight:800;">Top 5 Chronic (Avg Median AQI)</span><br>` +
-    fmtList(topChronic, 'MedianAQI_5yr') +
-    `<br><br>` +
-    `<span style="color:${COLORS['High Acute']}; font-weight:800;">Top 5 Acute (Avg Max AQI)</span><br>` +
-    fmtList(topAcute, 'MaxAQI_5yr')
-  );
+  Plotly.newPlot(divId, [{
+    type: 'bar',
+    orientation: 'h',
+    x: values,
+    y: labels,
+    marker: { color: COLORS['Livable'] },
+    hovertemplate: '<b>%{y}</b><br>Avg Median AQI: %{x:.1f}<extra></extra>'
+  }], commonLayout('Top 15 Most Livable Counties (Lowest Avg Median AQI)', {
+    xaxis: { title: 'Avg Median AQI', gridcolor: 'rgba(255,255,255,0.10)' },
+    yaxis: { gridcolor: 'rgba(255,255,255,0.10)' },
+    margin: { l: 190, r: 20, t: 70, b: 50 },
+    height: 560
+  }), { responsive: true, displayModeBar: false });
 }
 
-function renderScatter(divId, data, thrMedian, thrMax, pctLabel) {
-  const traces = Object.keys(COLORS).map(risk => {
+function renderScatter(divId, data, thrMedian, thrMax, titleSuffix) {
+  const risks = ['Low Risk','High Chronic','High Acute','Double Jeopardy'];
+
+  const traces = risks.map(risk => {
     const pts = data.filter(d => d.Risk === risk);
     return {
       type: 'scatter',
@@ -191,78 +200,101 @@ function renderScatter(divId, data, thrMedian, thrMax, pctLabel) {
     };
   });
 
-  // Threshold lines
   const shapes = [
     { type: 'line', x0: thrMedian, x1: thrMedian, y0: 0, y1: 1, yref: 'paper', line: { color: 'rgba(255,255,255,0.65)', dash: 'dash', width: 2 } },
     { type: 'line', y0: thrMax, y1: thrMax, x0: 0, x1: 1, xref: 'paper', line: { color: 'rgba(255,255,255,0.65)', dash: 'dash', width: 2 } }
   ];
 
-  // In-chart dropdown: Top 5 counties for each state
-  const states = Array.from(new Set(data.map(d => d.State))).sort();
-  const baseAnno = {
-    xref: 'paper', yref: 'paper', x: 0.01, y: 0.99,
-    xanchor: 'left', yanchor: 'top',
-    align: 'left',
-    text: '<b>Select a state</b><br>Use the dropdown to show Top 5 counties (chronic + acute).',
-    showarrow: false,
-    bgcolor: 'rgba(0,0,0,0.35)',
-    bordercolor: 'rgba(255,255,255,0.18)',
-    borderwidth: 1,
-    borderpad: 10,
-    font: { size: 12, color: '#e8ecf3' }
-  };
-
-  const buttons = [
-    {
-      label: 'Select state…',
-      method: 'relayout',
-      args: [{ annotations: [baseAnno] }]
-    },
-    ...states.map(st => ({
-      label: st,
-      method: 'relayout',
-      args: [{ annotations: [{ ...baseAnno, text: buildTop5Text(data, st) }] }]
-    }))
-  ];
-
-  Plotly.newPlot(divId, traces, {
-    title: { text: `Chronic vs Acute AQI (5-year avg) — thresholds at ${pctLabel}th percentile`, font: { color: '#e8ecf3' } },
-    paper_bgcolor: 'rgba(0,0,0,0)',
-    plot_bgcolor: 'rgba(0,0,0,0)',
-    font: { color: '#e8ecf3' },
-    xaxis: { title: 'Avg Median AQI (Daily “Grind”)', gridcolor: 'rgba(255,255,255,0.10)' },
-    yaxis: { title: 'Avg Max AQI (Extreme Events)', gridcolor: 'rgba(255,255,255,0.10)' },
+  Plotly.newPlot(divId, traces, commonLayout(`Chronic vs Acute AQI (5-year avg)${titleSuffix}`, {
+    xaxis: { title: '5-year Avg Median AQI (Daily “Grind”)', gridcolor: 'rgba(255,255,255,0.10)' },
+    yaxis: { title: '5-year Avg Max AQI (Extreme Events)', gridcolor: 'rgba(255,255,255,0.10)' },
     shapes,
-    annotations: [baseAnno],
-    updatemenus: [
-      {
-        type: 'dropdown',
-        direction: 'down',
-        x: 0.01,
-        y: 1.15,
-        xanchor: 'left',
-        yanchor: 'top',
-        bgcolor: 'rgba(0,0,0,0.35)',
-        bordercolor: 'rgba(255,255,255,0.18)',
-        font: { color: '#e8ecf3' },
-        buttons
-      }
-    ],
-    margin: { l: 70, r: 20, t: 90, b: 60 },
+    margin: { l: 70, r: 20, t: 70, b: 60 },
     height: 680,
     legend: { orientation: 'h', y: -0.18 }
-  }, {
+  }), {
     responsive: true,
     displayModeBar: true,
-    // Ensure zoom controls are available (zoom in/out + reset)
     modeBarButtonsToAdd: ['zoomIn2d','zoomOut2d','autoScale2d','resetScale2d'],
     displaylogo: false
   });
 }
 
-// ---------- Main controller ----------
-let RAW_ROWS = [];
+function renderDJTop5(divId, title, rows) {
+  if (!rows.length) {
+    Plotly.newPlot(divId, [], commonLayout(title, {
+      annotations: [{
+        text: 'No Double Jeopardy counties for this selection.',
+        xref: 'paper', yref: 'paper', x: 0.5, y: 0.5, showarrow: false,
+        font: { color: 'rgba(232,236,243,0.85)', size: 14 }
+      }],
+      margin: { l: 20, r: 20, t: 70, b: 40 },
+      height: 680
+    }), { responsive: true, displayModeBar: false });
+    return;
+  }
+
+  const labels = rows.map(d => d.County).reverse();
+  const values = rows.map(d => d.DJ_Score).reverse();
+
+  Plotly.newPlot(divId, [{
+    type: 'bar',
+    orientation: 'h',
+    x: values,
+    y: labels,
+    marker: { color: COLORS['Double Jeopardy'] },
+    hovertemplate: '<b>%{y}</b><br>DJ score: %{x:.1f}<extra></extra>'
+  }], commonLayout(title, {
+    xaxis: { title: 'Double Jeopardy Score', gridcolor: 'rgba(255,255,255,0.10)' },
+    yaxis: { gridcolor: 'rgba(255,255,255,0.10)' },
+    margin: { l: 110, r: 20, t: 70, b: 50 },
+    height: 680
+  }), { responsive: true, displayModeBar: false });
+}
+
+// ---------- USA choropleth heatmap ----------
+const STATE_TO_ABBR = {
+  'Alabama':'AL','Alaska':'AK','Arizona':'AZ','Arkansas':'AR','California':'CA','Colorado':'CO','Connecticut':'CT','Delaware':'DE',
+  'District Of Columbia':'DC','Florida':'FL','Georgia':'GA','Hawaii':'HI','Idaho':'ID','Illinois':'IL','Indiana':'IN','Iowa':'IA',
+  'Kansas':'KS','Kentucky':'KY','Louisiana':'LA','Maine':'ME','Maryland':'MD','Massachusetts':'MA','Michigan':'MI','Minnesota':'MN',
+  'Mississippi':'MS','Missouri':'MO','Montana':'MT','Nebraska':'NE','Nevada':'NV','New Hampshire':'NH','New Jersey':'NJ','New Mexico':'NM',
+  'New York':'NY','North Carolina':'NC','North Dakota':'ND','Ohio':'OH','Oklahoma':'OK','Oregon':'OR','Pennsylvania':'PA','Rhode Island':'RI',
+  'South Carolina':'SC','South Dakota':'SD','Tennessee':'TN','Texas':'TX','Utah':'UT','Vermont':'VT','Virginia':'VA','Washington':'WA',
+  'West Virginia':'WV','Wisconsin':'WI','Wyoming':'WY'
+};
+
+function renderHeatmap(divId, counties) {
+  const byState = new Map();
+  for (const d of counties) {
+    const abbr = STATE_TO_ABBR[d.State];
+    if (!abbr) continue;
+    byState.set(abbr, (byState.get(abbr) || 0) + (Number.isFinite(d.HighAQIDays_5yr) ? d.HighAQIDays_5yr : 0));
+  }
+
+  const locations = Array.from(byState.keys());
+  const z = locations.map(k => byState.get(k));
+
+  Plotly.newPlot(divId, [{
+    type: 'choropleth',
+    locationmode: 'USA-states',
+    locations,
+    z,
+    colorscale: 'OrRd',
+    marker: { line: { color: 'rgba(255,255,255,0.35)', width: 0.6 } },
+    colorbar: { title: 'High AQI days
+(2021–2025)', tickcolor: '#e8ecf3' }
+  }], commonLayout('High AQI Days by State (2021–2025)', {
+    geo: { scope: 'usa', bgcolor: 'rgba(0,0,0,0)' },
+    margin: { l: 20, r: 20, t: 70, b: 20 },
+    height: 680
+  }), { responsive: true, displayModeBar: false });
+}
+
+// ---------- App state ----------
 let AGG_5YR = [];
+let LABELED = [];
+let THR_MED = NaN;
+let THR_MAX = NaN;
 
 async function loadAllData() {
   const files = [
@@ -274,100 +306,120 @@ async function loadAllData() {
   ];
 
   const datasets = await Promise.all(files.map(loadCSV));
-  RAW_ROWS = datasets.flat();
-  AGG_5YR = aggregateFiveYear(RAW_ROWS);
+  const rows = datasets.flat();
+  AGG_5YR = aggregateFiveYear(rows);
+}
+
+function populateStateSelect(scoped) {
+  const select = $('state-select');
+  if (!select) return;
+  const states = Array.from(new Set(scoped.map(d => d.State))).sort();
+  select.innerHTML = '<option value="ALL" selected>All states</option>' +
+    states.map(s => `<option value="${s.replace(/"/g,'')}">${s}</option>`).join('');
+}
+
+function computeThresholds(scoped) {
+  THR_MED = percentile(scoped.map(d => d.MedianAQI_5yr), 0.90);
+  THR_MAX = percentile(scoped.map(d => d.MaxAQI_5yr), 0.90);
+}
+
+function updateTopNLabels() {
+  const nCh = Number($('topn-chronic')?.value || 15);
+  const nAc = Number($('topn-acute')?.value || 15);
+  setText('topn-chronic-value', String(nCh));
+  setText('topn-acute-value', String(nAc));
+  setText('topn-chronic-caption', String(nCh));
+  setText('topn-acute-caption', String(nAc));
+}
+
+function updateKPIs(scoped) {
+  setText('kpi-total', String(scoped.length));
+  const djCount = LABELED.filter(d => d.Risk === 'Double Jeopardy').length;
+  setText('kpi-dj', String(djCount));
+  setText('kpi-chronic', Number.isFinite(THR_MED) ? THR_MED.toFixed(1) : '—');
+  setText('kpi-acute', Number.isFinite(THR_MAX) ? THR_MAX.toFixed(1) : '—');
+  setText('story-total', String(scoped.length));
+  setText('story-dj', String(djCount));
+}
+
+function renderChronicAcuteCharts(scoped) {
+  const nCh = Number($('topn-chronic')?.value || 15);
+  const nAc = Number($('topn-acute')?.value || 15);
+
+  const topChronic = [...scoped].sort((a,b) => b.MedianAQI_5yr - a.MedianAQI_5yr).slice(0, nCh);
+  const topAcute = [...scoped].sort((a,b) => b.MaxAQI_5yr - a.MaxAQI_5yr).slice(0, nAc);
+
+  renderTopCounties('chart-chronic', `Top ${nCh} Counties by Chronic Burden (Avg Median AQI)`, topChronic, 'MedianAQI_5yr', 'Avg Median AQI', COLORS['High Chronic']);
+  renderTopCounties('chart-acute', `Top ${nAc} Counties by Acute Severity (Avg Max AQI)`, topAcute, 'MaxAQI_5yr', 'Avg Max AQI', COLORS['High Acute']);
+}
+
+function getLivableTop15(scoped) {
+  return [...scoped].sort((a,b) => a.MedianAQI_5yr - b.MedianAQI_5yr).slice(0, 15);
+}
+
+function getDJTop5For(allLabeled, state) {
+  return allLabeled
+    .filter(d => d.Risk === 'Double Jeopardy')
+    .filter(d => state === 'ALL' ? true : d.State === state)
+    .map(d => ({ ...d, DJ_Score: (d.MedianAQI_5yr - THR_MED) + (d.MaxAQI_5yr - THR_MAX) }))
+    .sort((a,b) => b.DJ_Score - a.DJ_Score)
+    .slice(0, 5);
+}
+
+function renderScatterAndSide(allLabeled, state) {
+  const filtered0 = (state && state !== 'ALL') ? allLabeled.filter(d => d.State === state) : allLabeled;
+  // remove specified outliers from scatter only
+  const filtered = filtered0.filter(d => !isScatterExcluded(d));
+
+  const suffix = (state && state !== 'ALL') ? ` — ${state}` : '';
+  renderScatter('chart-scatter', filtered, THR_MED, THR_MAX, suffix);
+
+  const top5 = getDJTop5For(allLabeled, state || 'ALL');
+  const title = (state && state !== 'ALL') ? `Top 5 Double Jeopardy — ${state}` : 'Top 5 Double Jeopardy (Overall)';
+  renderDJTop5('chart-dj-top5', title, top5);
 }
 
 function updateDashboard() {
   const scope = $('scope')?.value || 'all';
-  const pct = Number($('percentile')?.value || 90);
-  setText('percentile-value', String(pct));
-  setText('story-pct', String(pct));
-  setText('story-pct-2', String(pct));
-
-  // Scope-filtered county list
   const scoped = applyScope(AGG_5YR, scope);
 
-  const p = pct / 100;
-  const thrMedian = percentile(scoped.map(d => d.MedianAQI_5yr), p);
-  const thrMax = percentile(scoped.map(d => d.MaxAQI_5yr), p);
+  computeThresholds(scoped);
+  LABELED = classify(scoped, THR_MED, THR_MAX);
 
-  const labeled = classify(scoped, thrMedian, thrMax);
+  updateTopNLabels();
+  updateKPIs(scoped);
 
-  // KPIs
-  setText('kpi-total', String(labeled.length));
-  const djCount = labeled.filter(d => d.Risk === 'Double Jeopardy').length;
-  setText('kpi-dj', String(djCount));
-  setText('kpi-chronic', Number.isFinite(thrMedian) ? thrMedian.toFixed(1) : '—');
-  setText('kpi-acute', Number.isFinite(thrMax) ? thrMax.toFixed(1) : '—');
+  renderChronicAcuteCharts(LABELED);
+  renderLivable('chart-livable', getLivableTop15(LABELED));
 
-  // Story callout
-  setText('story-total', String(labeled.length));
-  setText('story-dj', String(djCount));
+  populateStateSelect(scoped);
+  const st = $('state-select')?.value || 'ALL';
+  renderScatterAndSide(LABELED, st);
 
-  // ---- Chart 1 & 2: state on x-axis, avg median/max on y-axis ----
-  const byState = new Map();
-  for (const d of labeled) {
-    if (!byState.has(d.State)) byState.set(d.State, { State: d.State, medSum: 0, maxSum: 0, n: 0 });
-    const s = byState.get(d.State);
-    s.medSum += d.MedianAQI_5yr;
-    s.maxSum += d.MaxAQI_5yr;
-    s.n += 1;
-  }
-  const stateRows = Array.from(byState.values())
-    .map(s => ({
-      State: s.State,
-      AvgMedian: s.medSum / s.n,
-      AvgMax: s.maxSum / s.n
-    }))
-    .sort((a,b) => a.State.localeCompare(b.State));
-
-  renderStateBars(
-    'chart-chronic',
-    'Chronic Burden by State (Avg of Counties’ 5-year Median AQI)',
-    stateRows.map(d => d.State),
-    stateRows.map(d => d.AvgMedian),
-    'Avg Median AQI',
-    COLORS['High Chronic']
-  );
-
-  renderStateBars(
-    'chart-acute',
-    'Acute Events by State (Avg of Counties’ 5-year Max AQI)',
-    stateRows.map(d => d.State),
-    stateRows.map(d => d.AvgMax),
-    'Avg Max AQI',
-    COLORS['High Acute']
-  );
-
-  // ---- Chart 4: most livable counties (lowest avg median AQI) ----
-  const livable = [...labeled]
-    .sort((a,b) => a.MedianAQI_5yr - b.MedianAQI_5yr)
-    .slice(0, 15);
-
-  renderHorizontalBar(
-    'chart-livable',
-    'Top 15 Most Livable Counties (Lowest Avg Median AQI)',
-    livable.map(d => `${d.County}, ${d.State}`).reverse(),
-    livable.map(d => d.MedianAQI_5yr).reverse(),
-    'Avg Median AQI',
-    '#5dd6a7'
-  );
-
-  // ---- Scatter (with dropdown + zoom controls) ----
-  renderScatter('chart-scatter', labeled, thrMedian, thrMax, pct);
+  renderHeatmap('chart-heatmap', scoped);
 }
 
 async function init() {
-  // Hide error box if visible
   const box = $('error-box');
   if (box) box.style.display = 'none';
 
   await loadAllData();
 
-  // Wire up UI
   $('scope')?.addEventListener('change', updateDashboard);
-  $('percentile')?.addEventListener('input', updateDashboard);
+
+  $('topn-chronic')?.addEventListener('input', () => {
+    updateTopNLabels();
+    renderChronicAcuteCharts(LABELED);
+  });
+
+  $('topn-acute')?.addEventListener('input', () => {
+    updateTopNLabels();
+    renderChronicAcuteCharts(LABELED);
+  });
+
+  $('state-select')?.addEventListener('change', (e) => {
+    renderScatterAndSide(LABELED, e.target.value);
+  });
 
   updateDashboard();
 }
