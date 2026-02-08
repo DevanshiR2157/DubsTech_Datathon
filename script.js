@@ -1,71 +1,89 @@
 const AQI_FILES = [
-    "annual_aqi_by_county_2021.csv",
-    "annual_aqi_by_county_2022.csv",
-    "annual_aqi_by_county_2023.csv",
-    "annual_aqi_by_county_2024.csv"
+    "./annual_aqi_by_county_2021.csv",
+    "./annual_aqi_by_county_2022.csv",
+    "./annual_aqi_by_county_2023.csv",
+    "./annual_aqi_by_county_2024.csv"
 ];
 
-let countyData = {};
 let processed = [];
 
 /* ---------- HELPERS ---------- */
 
-function setText(id, val) {
+function setText(id, value) {
     const el = document.getElementById(id);
-    if (el) el.textContent = val;
+    if (el) el.textContent = value;
 }
 
-function median(values) {
-    const v = [...values].sort((a, b) => a - b);
-    const mid = Math.floor(v.length / 2);
-    return v.length % 2 ? v[mid] : (v[mid - 1] + v[mid]) / 2;
+function median(arr) {
+    const v = arr.sort((a, b) => a - b);
+    const m = Math.floor(v.length / 2);
+    return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2;
+}
+
+function percentile(arr, p) {
+    const v = [...arr].sort((a, b) => a - b);
+    return v[Math.floor((p / 100) * v.length)];
 }
 
 /* ---------- LOAD CSVs ---------- */
 
-document.addEventListener("DOMContentLoaded", loadAllCSVs);
+document.addEventListener("DOMContentLoaded", loadCSVs);
 
-async function loadAllCSVs() {
+async function loadCSVs() {
     try {
         const datasets = await Promise.all(
             AQI_FILES.map(f => Plotly.d3.csv(f))
         );
 
-        datasets.flat().forEach(row => {
-            const key = `${row.State}-${row.County}`;
+        const countyMap = {};
 
-            if (!countyData[key]) {
-                countyData[key] = {
-                    state: row.State,
-                    county: row.County,
+        datasets.flat().forEach(row => {
+            const state = row["State"];
+            const county = row["County"];
+            const medAQI = Number(row["Median AQI"]);
+            const maxAQI = Number(row["Max AQI"]);
+
+            if (!state || !county || isNaN(medAQI) || isNaN(maxAQI)) return;
+
+            const key = `${state}-${county}`;
+            if (!countyMap[key]) {
+                countyMap[key] = {
+                    state,
+                    county,
                     medians: [],
                     maxes: []
                 };
             }
 
-            countyData[key].medians.push(+row["Median AQI"]);
-            countyData[key].maxes.push(+row["Max AQI"]);
+            countyMap[key].medians.push(medAQI);
+            countyMap[key].maxes.push(maxAQI);
         });
 
-        processData();
+        processed = Object.values(countyMap).map(d => ({
+            state: d.state,
+            county: d.county,
+            medianAQI: median(d.medians),
+            maxAQI: Math.max(...d.maxes)
+        }));
+
+        finalize();
     } catch (err) {
         console.error(err);
-        showError("Failed to load CSV files");
+        showError("Failed to load CSV files. Check filenames & paths.");
     }
 }
 
-/* ---------- PROCESS DATA ---------- */
+/* ---------- PROCESS & STATS ---------- */
 
-function processData() {
-    processed = Object.values(countyData).map(d => ({
-        state: d.state,
-        county: d.county,
-        medianAQI: median(d.medians),
-        maxAQI: Math.max(...d.maxes)
-    }));
-
-    const chronicThresh = percentile(processed.map(d => d.medianAQI), 90);
-    const acuteThresh = percentile(processed.map(d => d.maxAQI), 90);
+function finalize() {
+    const chronicThresh = percentile(
+        processed.map(d => d.medianAQI),
+        90
+    );
+    const acuteThresh = percentile(
+        processed.map(d => d.maxAQI),
+        90
+    );
 
     processed.forEach(d => {
         d.risk =
@@ -74,27 +92,16 @@ function processData() {
                 : "Other";
     });
 
-    updateStats(chronicThresh, acuteThresh);
-    populateStates();
-    renderCharts();
-}
-
-/* ---------- STATS ---------- */
-
-function percentile(arr, p) {
-    const sorted = [...arr].sort((a, b) => a - b);
-    const idx = Math.floor((p / 100) * sorted.length);
-    return sorted[idx];
-}
-
-function updateStats(chronic, acute) {
     setText("stat-counties", processed.length);
     setText(
         "stat-dj",
         processed.filter(d => d.risk === "Double Jeopardy").length
     );
-    setText("chronic-thresh", chronic.toFixed(1));
-    setText("acute-thresh", acute.toFixed(0));
+    setText("chronic-thresh", chronicThresh.toFixed(1));
+    setText("acute-thresh", acuteThresh.toFixed(0));
+
+    populateStates();
+    renderCharts();
 }
 
 /* ---------- FILTER ---------- */
@@ -134,8 +141,8 @@ function renderChronic() {
         x: top.map(d => d.medianAQI),
         y: top.map(d => `${d.county}, ${d.state}`)
     }], {
-        title: "Top 15 Counties by Chronic Exposure",
-        margin: { l: 200 }
+        margin: { l: 220 },
+        xaxis: { title: "Median AQI (Chronic Exposure)" }
     });
 }
 
@@ -150,15 +157,16 @@ function renderAcute() {
         x: top.map(d => d.maxAQI),
         y: top.map(d => `${d.county}, ${d.state}`)
     }], {
-        title: "Top 15 Counties by Acute Events",
-        margin: { l: 200 }
+        margin: { l: 220 },
+        xaxis: { title: "Max AQI (Acute Events)" }
     });
 }
 
 function renderScatter(state) {
-    const data = state === "ALL"
-        ? processed
-        : processed.filter(d => d.state === state);
+    const data =
+        state === "ALL"
+            ? processed
+            : processed.filter(d => d.state === state);
 
     Plotly.newPlot("scatter-plot", [{
         type: "scatter",
@@ -173,7 +181,6 @@ function renderScatter(state) {
             )
         }
     }], {
-        title: "Median vs Max AQI by County",
         xaxis: { title: "Median AQI (Chronic)" },
         yaxis: { title: "Max AQI (Acute)" }
     });
@@ -182,5 +189,5 @@ function renderScatter(state) {
 /* ---------- ERROR ---------- */
 
 function showError(msg) {
-    document.body.innerHTML = `<h1>${msg}</h1>`;
+    document.body.innerHTML = `<h1 style="padding:40px">${msg}</h1>`;
 }
