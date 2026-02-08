@@ -1,44 +1,151 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Double Jeopardy Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Double Jeopardy: Air Quality (2021–2025)</title>
 
-  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700;800&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Plotly (interactive charts) -->
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <!-- PapaParse (CSV parsing in the browser) -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
+
 <body>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="badge">2026 Datathon • AQI 2021–2025</div>
+      <h1>Double Jeopardy Counties</h1>
+      <p class="subtitle">
+        Where <strong>chronic daily pollution</strong> meets <strong>extreme air quality events</strong>.
+      </p>
 
-  <h1>Double Jeopardy</h1>
+      <div class="controls">
+        <div class="control">
+          <label for="scope">Scope</label>
+          <select id="scope">
+            <option value="all" selected>All rows in CSVs</option>
+            <option value="us">U.S. states + DC only</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="percentile">Threshold percentile</label>
+          <div class="range-row">
+            <input id="percentile" type="range" min="85" max="97" step="1" value="90" />
+            <span class="pill"><span id="percentile-value">90</span>th</span>
+          </div>
+          <div class="help">Top X% = “high chronic” and “high acute”.</div>
+        </div>
+      </div>
 
-  <!-- STATS -->
-  <section class="stats">
-    <div>
-      <h2 id="total-counties">—</h2>
-      <p>Counties Analyzed</p>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-label">Counties analyzed</div><div id="kpi-total" class="kpi-value">—</div></div>
+        <div class="kpi"><div class="kpi-label">Double Jeopardy counties</div><div id="kpi-dj" class="kpi-value">—</div></div>
+        <div class="kpi"><div class="kpi-label">Chronic threshold (Median AQI)</div><div id="kpi-chronic" class="kpi-value">—</div></div>
+        <div class="kpi"><div class="kpi-label">Acute threshold (Max AQI)</div><div id="kpi-acute" class="kpi-value">—</div></div>
+      </div>
     </div>
-    <div>
-      <h2 id="dj-counties">—</h2>
-      <p>Double Jeopardy Counties</p>
+  </header>
+
+  <section id="error-box" class="error" style="display:none;">
+    <h2>Error Loading Data</h2>
+    <p id="error-details" class="mono"></p>
+    <div class="hint">
+      <p><strong>Quick fix:</strong> serve this folder with a local server (don’t open <code>index.html</code> directly).</p>
+      <pre><code>python -m http.server 8000
+# then open http://localhost:8000</code></pre>
+      <p>For GitHub Pages, just commit all files and enable Pages in your repo settings.</p>
     </div>
   </section>
 
-  <!-- CHARTS -->
-  <section>
-    <h2>Chronic Exposure (Median AQI)</h2>
-    <div id="chronic-chart"></div>
-  </section>
+  <main class="container">
+    <section class="panel">
+      <h2>The Question</h2>
+      <p>
+        <strong>Which counties face both frequent and severe pollution?</strong>
+        We measure frequency using <em>Median AQI</em> (the daily “grind”) and severity using <em>Max AQI</em> (extreme events).
+        Counties in the <strong>top <span id="story-pct">90</span>%</strong> for both metrics are labeled
+        <strong>“Double Jeopardy”</strong> — the places that never get a break, and when they do get hit, they get hit hard.
+      </p>
+      <p class="callout">
+        In this run, we identify <strong><span id="story-dj">—</span></strong> Double Jeopardy counties out of
+        <strong><span id="story-total">—</span></strong> analyzed.
+      </p>
+    </section>
 
-  <section>
-    <h2>Acute Exposure (Max AQI)</h2>
-    <div id="acute-chart"></div>
-  </section>
+    <section class="grid">
+      <section class="panel">
+        <h2>1) Chronic Burden (Daily “Grind”)</h2>
+        <p class="caption">Top 15 counties by 5-year average <strong>Median AQI</strong>.</p>
+        <div id="chart-chronic" class="chart"></div>
+      </section>
 
-  <section>
-    <h2>Chronic vs Acute</h2>
-    <div id="scatter-chart"></div>
-  </section>
+      <section class="panel">
+        <h2>2) Acute Events (Extreme AQI)</h2>
+        <p class="caption">Top 15 counties by 5-year average <strong>Max AQI</strong>.</p>
+        <div id="chart-acute" class="chart"></div>
+      </section>
+    </section>
+
+    <section class="panel">
+      <h2>3) Chronic vs Acute: The Double Jeopardy Zone</h2>
+      <p class="caption">
+        Scatter plot of 5-year average metrics. Dashed lines are the <span id="story-pct-2">90</span>th percentile thresholds.
+        The top-right quadrant is the “Double Jeopardy” zone.
+      </p>
+      <div id="chart-scatter" class="chart tall"></div>
+      <div class="legend-note">
+        <span class="dot low"></span> Low Risk
+        <span class="dot chronic"></span> High Chronic
+        <span class="dot acute"></span> High Acute
+        <span class="dot dj"></span> Double Jeopardy
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Why identifying these counties matters</h2>
+      <div class="cols">
+        <div>
+          <h3>1) Triage for Public Health Resources</h3>
+          <p>
+            Residents face compounded risk: chronic exposure with no recovery time before acute spikes.
+            <strong>Action:</strong> prioritize respiratory clinic funding, subsidized inhalers, and school/elder-care air purifiers.
+          </p>
+
+          <h3>2) Infrastructure & Urban Planning</h3>
+          <p>
+            Chronic pollution often reflects infrastructure/geography; acute pollution often reflects events (wildfires/industrial incidents).
+            <strong>Action:</strong> target green buffers and heat-mitigation design in Double Jeopardy zones.
+          </p>
+        </div>
+        <div>
+          <h3>3) Real-Time Crisis Preparedness</h3>
+          <p>
+            A county with low median but high max needs seasonal readiness; Double Jeopardy counties need year-round readiness.
+            <strong>Action:</strong> justify permanent high-precision monitoring and response protocols.
+          </p>
+
+          <h3>4) Economic & Insurance Policy</h3>
+          <p>
+            Climate risk is increasingly priced into health costs and housing.
+            <strong>Action:</strong> quantify the hidden “Clean Air Tax” through higher medical bills and reduced quality of life.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>
+        Built as a lightweight static dashboard using CSV + Plotly. Data: annual AQI by county (2021–2025).
+      </p>
+    </footer>
+  </main>
 
   <script src="script.js"></script>
 </body>
