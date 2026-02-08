@@ -1,43 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Double Jeopardy Dashboard</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <title>Double Jeopardy Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-    <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<h1>Double Jeopardy</h1>
+  <h1>Double Jeopardy</h1>
 
-<section class="key-stats">
+  <!-- STATS -->
+  <section class="stats">
     <div>
-        <h2 id="total-counties">—</h2>
-        <p>Counties Analyzed</p>
+      <h2 id="total-counties">—</h2>
+      <p>Counties Analyzed</p>
     </div>
     <div>
-        <h2 id="dj-counties">—</h2>
-        <p>Double Jeopardy Counties</p>
+      <h2 id="dj-counties">—</h2>
+      <p>Double Jeopardy Counties</p>
     </div>
-</section>
+  </section>
 
-<section>
-    <h2>Chronic Exposure</h2>
+  <!-- CHARTS -->
+  <section>
+    <h2>Chronic Exposure (Median AQI)</h2>
     <div id="chronic-chart"></div>
-</section>
+  </section>
 
-<section>
-    <h2>Acute Exposure</h2>
+  <section>
+    <h2>Acute Exposure (Max AQI)</h2>
     <div id="acute-chart"></div>
-</section>
+  </section>
 
-<section>
+  <section>
     <h2>Chronic vs Acute</h2>
     <div id="scatter-chart"></div>
-</section>
+  </section>
 
-<script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
