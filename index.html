@@ -2,58 +2,32 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Double Jeopardy | DubsTech Datathon 2026</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@200;400;700;900&display=swap" rel="stylesheet">
 
+    <!-- Plotly (includes d3.csv) -->
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- TITLE -->
 <section id="title">
-    <svg viewBox="0 0 100 100">
-        <defs>
-            <path id="circle" d="M 50,50 m -37,0 a 37,37 0 1,1 74,0 a 37,37 0 1,1 -74,0"/>
-        </defs>
-        <text font-size="8">
-            <textPath xlink:href="#circle">
-                2026 DubsTech Datathon • Air Quality • Double Jeopardy
-            </textPath>
-        </text>
-    </svg>
-
     <div class="title-container">
         <h1>Double Jeopardy</h1>
         <p class="subtitle">
-            Identifying America’s most vulnerable communities through five years of air quality data
+            Chronic exposure meets acute air-quality emergencies (2021–2024)
         </p>
     </div>
 </section>
 
-<!-- INTRO -->
-<section class="half">
-    <div>
-        <p>
-            Using EPA AQI data from 2021–2025, we identified <strong>37 counties</strong> where chronic
-            pollution exposure and extreme air-quality emergencies collide — creating a
-            compounding public-health risk.
-        </p>
-    </div>
-</section>
-
-<!-- KEY STATS (FIXED IDS) -->
 <section>
-    <h2>Understanding Double Jeopardy</h2>
-
-    <p>
-        Chronic exposure reflects everyday air quality. Acute events capture the single worst days.
-        Counties in the top 10% of both face <em>Double Jeopardy</em>.
-    </p>
+    <h2>Key Statistics</h2>
 
     <div class="key-stats">
         <div class="key-stat">
@@ -63,61 +37,52 @@
 
         <div class="key-stat">
             <div class="key-stat-number" id="stat-dj">—</div>
-            <div class="key-stat-label">Double Jeopardy Zones</div>
+            <div class="key-stat-label">Double Jeopardy Counties</div>
         </div>
 
         <div class="key-stat">
-            <div class="key-stat-number">
-                <span id="chronic-thresh">—</span>
-            </div>
-            <div class="key-stat-label">Chronic Threshold (AQI)</div>
+            <div class="key-stat-number" id="chronic-thresh">—</div>
+            <div class="key-stat-label">Chronic Threshold</div>
         </div>
 
         <div class="key-stat">
-            <div class="key-stat-number">
-                <span id="acute-thresh">—</span>
-            </div>
-            <div class="key-stat-label">Acute Threshold (AQI)</div>
+            <div class="key-stat-number" id="acute-thresh">—</div>
+            <div class="key-stat-label">Acute Threshold</div>
         </div>
     </div>
 </section>
 
-<!-- CHARTS -->
 <section>
-    <h2>The Daily Grind: Chronic Exposure</h2>
+    <h2>Chronic Exposure (Median AQI)</h2>
     <div class="chart-container">
         <div id="chronic-chart"></div>
     </div>
 </section>
 
 <section>
-    <h2>The Sudden Shock: Acute Events</h2>
+    <h2>Acute Events (Max AQI)</h2>
     <div class="chart-container">
         <div id="acute-chart"></div>
     </div>
 </section>
 
-<section id="explorer">
-    <h2>The Double Jeopardy Map</h2>
+<section>
+    <h2>Double Jeopardy Map</h2>
 
     <div class="filter-inline">
         <label for="state-filter">Filter by State:</label>
         <select id="state-filter">
-            <option value="ALL">All United States</option>
+            <option value="ALL">All States</option>
         </select>
     </div>
 
     <div class="chart-container-scatter">
         <div id="scatter-plot"></div>
     </div>
-
-    <div id="details-panel" class="details-panel-inline">
-        <p class="details-hint">Hover over a county to see detailed statistics</p>
-    </div>
 </section>
 
 <footer>
-    <p>Created for the 2026 DubsTech Datathon</p>
+    <p>EPA AQI Data (2021–2024)</p>
 </footer>
 
 <script src="script.js"></script>
