@@ -1,92 +1,186 @@
-let globalData = null;
+const AQI_FILES = [
+    "annual_aqi_by_county_2021.csv",
+    "annual_aqi_by_county_2022.csv",
+    "annual_aqi_by_county_2023.csv",
+    "annual_aqi_by_county_2024.csv"
+];
 
-// Utility: safe DOM write
-function setText(id, value) {
+let countyData = {};
+let processed = [];
+
+/* ---------- HELPERS ---------- */
+
+function setText(id, val) {
     const el = document.getElementById(id);
-    if (el) el.textContent = value;
+    if (el) el.textContent = val;
 }
 
-// Init after DOM
-document.addEventListener("DOMContentLoaded", () => {
-    loadData();
-});
+function median(values) {
+    const v = [...values].sort((a, b) => a - b);
+    const mid = Math.floor(v.length / 2);
+    return v.length % 2 ? v[mid] : (v[mid - 1] + v[mid]) / 2;
+}
 
-async function loadData() {
+/* ---------- LOAD CSVs ---------- */
+
+document.addEventListener("DOMContentLoaded", loadAllCSVs);
+
+async function loadAllCSVs() {
     try {
-        const response = await fetch("./dashboard_data.json");
-        if (!response.ok) throw new Error("Failed to load dashboard_data.json");
+        const datasets = await Promise.all(
+            AQI_FILES.map(f => Plotly.d3.csv(f))
+        );
 
-        globalData = await response.json();
-        initializeDashboard();
+        datasets.flat().forEach(row => {
+            const key = `${row.State}-${row.County}`;
+
+            if (!countyData[key]) {
+                countyData[key] = {
+                    state: row.State,
+                    county: row.County,
+                    medians: [],
+                    maxes: []
+                };
+            }
+
+            countyData[key].medians.push(+row["Median AQI"]);
+            countyData[key].maxes.push(+row["Max AQI"]);
+        });
+
+        processData();
     } catch (err) {
         console.error(err);
-        showError(err.message);
+        showError("Failed to load CSV files");
     }
 }
 
-function initializeDashboard() {
-    try {
-        // SAFE STATS UPDATES
-        setText("stat-counties", globalData.metadata.total_counties);
-        setText("stat-dj", globalData.metadata.dj_count);
-        setText("chronic-thresh", globalData.metadata.chronic_threshold);
-        setText("acute-thresh", globalData.metadata.acute_threshold);
+/* ---------- PROCESS DATA ---------- */
 
-        populateStateFilter();
-        renderChronicChart();
-        renderAcuteChart();
-        renderScatterPlot("ALL");
+function processData() {
+    processed = Object.values(countyData).map(d => ({
+        state: d.state,
+        county: d.county,
+        medianAQI: median(d.medians),
+        maxAQI: Math.max(...d.maxes)
+    }));
 
-        console.log("Dashboard initialized successfully");
-    } catch (err) {
-        console.error("Init error:", err);
-        showError(err.message);
-    }
+    const chronicThresh = percentile(processed.map(d => d.medianAQI), 90);
+    const acuteThresh = percentile(processed.map(d => d.maxAQI), 90);
+
+    processed.forEach(d => {
+        d.risk =
+            d.medianAQI >= chronicThresh && d.maxAQI >= acuteThresh
+                ? "Double Jeopardy"
+                : "Other";
+    });
+
+    updateStats(chronicThresh, acuteThresh);
+    populateStates();
+    renderCharts();
 }
 
-function populateStateFilter() {
+/* ---------- STATS ---------- */
+
+function percentile(arr, p) {
+    const sorted = [...arr].sort((a, b) => a - b);
+    const idx = Math.floor((p / 100) * sorted.length);
+    return sorted[idx];
+}
+
+function updateStats(chronic, acute) {
+    setText("stat-counties", processed.length);
+    setText(
+        "stat-dj",
+        processed.filter(d => d.risk === "Double Jeopardy").length
+    );
+    setText("chronic-thresh", chronic.toFixed(1));
+    setText("acute-thresh", acute.toFixed(0));
+}
+
+/* ---------- FILTER ---------- */
+
+function populateStates() {
     const select = document.getElementById("state-filter");
-    if (!select) return;
+    const states = [...new Set(processed.map(d => d.state))].sort();
 
-    const states = [...new Set(globalData.scatter_data.map(d => d.State))].sort();
-    states.forEach(state => {
-        const option = document.createElement("option");
-        option.value = state;
-        option.textContent = state;
-        select.appendChild(option);
+    states.forEach(s => {
+        const opt = document.createElement("option");
+        opt.value = s;
+        opt.textContent = s;
+        select.appendChild(opt);
     });
 
-    select.addEventListener("change", e => {
-        renderScatterPlot(e.target.value);
+    select.addEventListener("change", e =>
+        renderScatter(e.target.value)
+    );
+}
+
+/* ---------- CHARTS ---------- */
+
+function renderCharts() {
+    renderChronic();
+    renderAcute();
+    renderScatter("ALL");
+}
+
+function renderChronic() {
+    const top = [...processed]
+        .sort((a, b) => b.medianAQI - a.medianAQI)
+        .slice(0, 15);
+
+    Plotly.newPlot("chronic-chart", [{
+        type: "bar",
+        orientation: "h",
+        x: top.map(d => d.medianAQI),
+        y: top.map(d => `${d.county}, ${d.state}`)
+    }], {
+        title: "Top 15 Counties by Chronic Exposure",
+        margin: { l: 200 }
     });
 }
 
-/* ===== CHARTS ===== */
+function renderAcute() {
+    const top = [...processed]
+        .sort((a, b) => b.maxAQI - a.maxAQI)
+        .slice(0, 15);
 
-function renderChronicChart() {
-    Plotly.newPlot("chronic-chart", [], { title: "Chronic Exposure" });
+    Plotly.newPlot("acute-chart", [{
+        type: "bar",
+        orientation: "h",
+        x: top.map(d => d.maxAQI),
+        y: top.map(d => `${d.county}, ${d.state}`)
+    }], {
+        title: "Top 15 Counties by Acute Events",
+        margin: { l: 200 }
+    });
 }
 
-function renderAcuteChart() {
-    Plotly.newPlot("acute-chart", [], { title: "Acute Events" });
+function renderScatter(state) {
+    const data = state === "ALL"
+        ? processed
+        : processed.filter(d => d.state === state);
+
+    Plotly.newPlot("scatter-plot", [{
+        type: "scatter",
+        mode: "markers",
+        x: data.map(d => d.medianAQI),
+        y: data.map(d => d.maxAQI),
+        text: data.map(d => `${d.county}, ${d.state}`),
+        marker: {
+            size: 8,
+            color: data.map(d =>
+                d.risk === "Double Jeopardy" ? "#dc2626" : "#94a3b8"
+            )
+        }
+    }], {
+        title: "Median vs Max AQI by County",
+        xaxis: { title: "Median AQI (Chronic)" },
+        yaxis: { title: "Max AQI (Acute)" }
+    });
 }
 
-function renderScatterPlot(state) {
-    Plotly.newPlot("scatter-plot", [], { title: "Double Jeopardy Map" });
-}
+/* ---------- ERROR ---------- */
 
-/* ===== ERROR UI ===== */
-
-function showError(message) {
-    document.body.innerHTML = `
-        <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center">
-            <div>
-                <h1>Error Loading Data</h1>
-                <p>${message}</p>
-                <p><strong>Run a local server:</strong></p>
-                <pre>python -m http.server 8000</pre>
-                <p>Then open <code>http://localhost:8000</code></p>
-            </div>
-        </div>
-    `;
+function showError(msg) {
+    document.body.innerHTML = `<h1>${msg}</h1>`;
 }
