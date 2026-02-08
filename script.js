@@ -2,58 +2,80 @@ document.addEventListener("DOMContentLoaded", init);
 
 async function init() {
     try {
-        const res = await fetch("dashboard_data.json");
+        console.log("Fetching dashboard_data.json…");
+
+        const res = await fetch("./dashboard_data.json");
+
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+        }
+
         const data = await res.json();
+        console.log("Loaded JSON:", data);
+
+        // ---- Normalize data ----
+        const counties =
+            Array.isArray(data)
+                ? data
+                : Array.isArray(data.counties)
+                    ? data.counties
+                    : [];
+
+        if (counties.length === 0) {
+            throw new Error("No county data found in JSON");
+        }
 
         // ---- Stats ----
         document.getElementById("total-counties").textContent =
-            data.counties.length;
+            counties.length;
 
-        const dj = data.counties.filter(d => d.double_jeopardy);
+        const dj = counties.filter(d => d.double_jeopardy === true);
         document.getElementById("dj-counties").textContent = dj.length;
 
         // ---- Charts ----
-        renderChronic(data.counties);
-        renderAcute(data.counties);
-        renderScatter(data.counties);
+        renderChronic(counties);
+        renderAcute(counties);
+        renderScatter(counties);
 
     } catch (err) {
-        console.error(err);
-        document.body.innerHTML = "<h1>Error loading dashboard data</h1>";
+        console.error("LOCK-IN ERROR:", err);
+        document.body.innerHTML = `
+            <h1 style="padding:40px;color:red">
+                Dashboard failed to load
+            </h1>
+            <pre>${err.message}</pre>
+            <p>Open DevTools → Console for details</p>
+        `;
     }
 }
 
-function renderChronic(counties) {
+/* ---------- Charts ---------- */
+
+function renderChronic(data) {
     Plotly.newPlot("chronic-chart", [{
         type: "bar",
-        x: counties.map(d => d.median_aqi),
-        y: counties.map(d => `${d.county}, ${d.state}`),
-        orientation: "h"
-    }], {
-        margin: { l: 200 },
-        xaxis: { title: "Median AQI" }
-    });
+        orientation: "h",
+        x: data.map(d => d.median_aqi),
+        y: data.map(d => `${d.county}, ${d.state}`)
+    }], { margin: { l: 200 } });
 }
 
-function renderAcute(counties) {
+function renderAcute(data) {
     Plotly.newPlot("acute-chart", [{
         type: "bar",
-        x: counties.map(d => d.max_aqi),
-        y: counties.map(d => `${d.county}, ${d.state}`),
-        orientation: "h"
-    }], {
-        margin: { l: 200 },
-        xaxis: { title: "Max AQI" }
-    });
+        orientation: "h",
+        x: data.map(d => d.max_aqi),
+        y: data.map(d => `${d.county}, ${d.state}`)
+    }], { margin: { l: 200 } });
 }
 
-function renderScatter(counties) {
+function renderScatter(data) {
     Plotly.newPlot("scatter-chart", [{
         type: "scatter",
         mode: "markers",
-        x: counties.map(d => d.median_aqi),
-        y: counties.map(d => d.max_aqi),
-        text: counties.map(d => `${d.county}, ${d.state}`),
+        x: data.map(d => d.median_aqi),
+        y: data.map(d => d.max_aqi),
+        text: data.map(d => `${d.county}, ${d.state}`),
         marker: { size: 8 }
     }], {
         xaxis: { title: "Median AQI" },
