@@ -47,8 +47,8 @@
       <div class="kpis">
         <div class="kpi"><div class="kpi-label">Counties analyzed</div><div id="kpi-total" class="kpi-value">—</div></div>
         <div class="kpi"><div class="kpi-label">Double Jeopardy counties</div><div id="kpi-dj" class="kpi-value">—</div></div>
-        <div class="kpi"><div class="kpi-label">Chronic threshold (Median AQI)</div><div id="kpi-chronic" class="kpi-value">—</div></div>
-        <div class="kpi"><div class="kpi-label">Acute threshold (Max AQI)</div><div id="kpi-acute" class="kpi-value">—</div></div>
+        <div class="kpi"><div class="kpi-label">Chronic threshold (Avg Median AQI)</div><div id="kpi-chronic" class="kpi-value">—</div></div>
+        <div class="kpi"><div class="kpi-label">Acute threshold (Avg Max AQI)</div><div id="kpi-acute" class="kpi-value">—</div></div>
       </div>
     </div>
   </header>
@@ -69,9 +69,9 @@
       <h2>The Question</h2>
       <p>
         <strong>Which counties face both frequent and severe pollution?</strong>
-        We measure frequency using <em>Median AQI</em> (the daily “grind”) and severity using <em>Max AQI</em> (extreme events).
-        Counties in the <strong>top <span id="story-pct">90</span>%</strong> for both metrics are labeled
-        <strong>“Double Jeopardy”</strong> — the places that never get a break, and when they do get hit, they get hit hard.
+        We measure frequency using a county’s <em>5-year average Median AQI</em> (the daily “grind”) and severity using its
+        <em>5-year average Max AQI</em> (extreme events). Counties in the <strong>top <span id="story-pct">90</span>%</strong>
+        for both metrics are labeled <strong>“Double Jeopardy”</strong> — places that never get a break, and when they get hit, they get hit hard.
       </p>
       <p class="callout">
         In this run, we identify <strong><span id="story-dj">—</span></strong> Double Jeopardy counties out of
@@ -81,14 +81,14 @@
 
     <section class="grid">
       <section class="panel">
-        <h2>1) Chronic Burden (Daily “Grind”)</h2>
-        <p class="caption">Top 15 counties by 5-year average <strong>Median AQI</strong>.</p>
+        <h2>1) Chronic Burden by State (Daily “Grind”)</h2>
+        <p class="caption">X = State • Y = average of counties’ 5-year <strong>Median AQI</strong>.</p>
         <div id="chart-chronic" class="chart"></div>
       </section>
 
       <section class="panel">
-        <h2>2) Acute Events (Extreme AQI)</h2>
-        <p class="caption">Top 15 counties by 5-year average <strong>Max AQI</strong>.</p>
+        <h2>2) Acute Events by State (Extreme AQI)</h2>
+        <p class="caption">X = State • Y = average of counties’ 5-year <strong>Max AQI</strong>.</p>
         <div id="chart-acute" class="chart"></div>
       </section>
     </section>
@@ -96,8 +96,8 @@
     <section class="panel">
       <h2>3) Chronic vs Acute: The Double Jeopardy Zone</h2>
       <p class="caption">
-        Scatter plot of 5-year average metrics. Dashed lines are the <span id="story-pct-2">90</span>th percentile thresholds.
-        The top-right quadrant is the “Double Jeopardy” zone.
+        Scatter of 5-year average metrics per county. Dashed lines are the <span id="story-pct-2">90</span>th percentile thresholds.
+        Use the in-chart dropdown (top-left) to see the <strong>Top 5 counties</strong> for the selected state.
       </p>
       <div id="chart-scatter" class="chart tall"></div>
       <div class="legend-note">
@@ -106,6 +106,12 @@
         <span class="dot acute"></span> High Acute
         <span class="dot dj"></span> Double Jeopardy
       </div>
+    </section>
+
+    <section class="panel">
+      <h2>4) Most Livable Counties</h2>
+      <p class="caption">Top 15 counties with the <strong>lowest</strong> 5-year average <strong>Median AQI</strong>.</p>
+      <div id="chart-livable" class="chart"></div>
     </section>
 
     <section class="panel">

@@ -88,10 +88,10 @@ function applyScope(counties, scope) {
 }
 
 // ---------- Categorize risk ----------
-function classify(counties, p90Median, p90Max) {
+function classify(counties, thrMedian, thrMax) {
   return counties.map(d => {
-    const chronic = d.MedianAQI_5yr >= p90Median;
-    const acute = d.MaxAQI_5yr >= p90Max;
+    const chronic = d.MedianAQI_5yr >= thrMedian;
+    const acute = d.MaxAQI_5yr >= thrMax;
 
     let risk = 'Low Risk';
     if (chronic && acute) risk = 'Double Jeopardy';
@@ -102,7 +102,7 @@ function classify(counties, p90Median, p90Max) {
   });
 }
 
-// ---------- Charts ----------
+// ---------- Colors ----------
 const COLORS = {
   'Low Risk': '#b8c1cc',
   'High Chronic': '#ff8a3d',
@@ -110,29 +110,73 @@ const COLORS = {
   'Double Jeopardy': '#b16cff'
 };
 
-function renderTopBar(divId, title, items, valueKey, color) {
-  const labels = items.map(d => `${d.County}, ${d.State}`);
-  const vals = items.map(d => d[valueKey]);
-
+// ---------- Charts ----------
+function renderStateBars(divId, title, states, values, yTitle, color) {
   Plotly.newPlot(divId, [{
     type: 'bar',
-    x: vals,
-    y: labels,
-    orientation: 'h',
-    marker: { color }
+    x: states,
+    y: values,
+    marker: { color },
+    hovertemplate: '<b>%{x}</b><br>' + yTitle + ': %{y:.1f}<extra></extra>'
   }], {
     title: { text: title, font: { color: '#e8ecf3' } },
     paper_bgcolor: 'rgba(0,0,0,0)',
     plot_bgcolor: 'rgba(0,0,0,0)',
     font: { color: '#e8ecf3' },
-    xaxis: { gridcolor: 'rgba(255,255,255,0.10)' },
-    yaxis: { gridcolor: 'rgba(255,255,255,0.10)' },
-    margin: { l: 180, r: 20, t: 60, b: 40 },
+    xaxis: {
+      title: 'State',
+      tickangle: 60,
+      gridcolor: 'rgba(255,255,255,0.10)'
+    },
+    yaxis: {
+      title: yTitle,
+      gridcolor: 'rgba(255,255,255,0.10)'
+    },
+    margin: { l: 70, r: 20, t: 70, b: 120 },
     height: 520
-  }, { responsive: true, displayModeBar: false });
+  }, { responsive: true, displayModeBar: true });
 }
 
-function renderScatter(divId, data, p90Median, p90Max, pctLabel) {
+function renderHorizontalBar(divId, title, labels, values, xTitle, color) {
+  Plotly.newPlot(divId, [{
+    type: 'bar',
+    orientation: 'h',
+    x: values,
+    y: labels,
+    marker: { color },
+    hovertemplate: '<b>%{y}</b><br>' + xTitle + ': %{x:.1f}<extra></extra>'
+  }], {
+    title: { text: title, font: { color: '#e8ecf3' } },
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    font: { color: '#e8ecf3' },
+    xaxis: { title: xTitle, gridcolor: 'rgba(255,255,255,0.10)' },
+    yaxis: { gridcolor: 'rgba(255,255,255,0.10)' },
+    margin: { l: 190, r: 20, t: 70, b: 50 },
+    height: 560
+  }, { responsive: true, displayModeBar: true });
+}
+
+function buildTop5Text(counties, state) {
+  const rows = counties.filter(d => d.State === state);
+  if (!rows.length) return 'No data for this state.';
+
+  const topChronic = [...rows].sort((a,b) => b.MedianAQI_5yr - a.MedianAQI_5yr).slice(0,5);
+  const topAcute = [...rows].sort((a,b) => b.MaxAQI_5yr - a.MaxAQI_5yr).slice(0,5);
+
+  const fmtList = (arr, key) => arr.map((d,i) => `${i+1}. ${d.County} (${d[key].toFixed(1)})`).join('<br>');
+
+  return (
+    `<b>${state}</b><br>` +
+    `<span style="color:${COLORS['High Chronic']}; font-weight:800;">Top 5 Chronic (Avg Median AQI)</span><br>` +
+    fmtList(topChronic, 'MedianAQI_5yr') +
+    `<br><br>` +
+    `<span style="color:${COLORS['High Acute']}; font-weight:800;">Top 5 Acute (Avg Max AQI)</span><br>` +
+    fmtList(topAcute, 'MaxAQI_5yr')
+  );
+}
+
+function renderScatter(divId, data, thrMedian, thrMax, pctLabel) {
   const traces = Object.keys(COLORS).map(risk => {
     const pts = data.filter(d => d.Risk === risk);
     return {
@@ -141,15 +185,44 @@ function renderScatter(divId, data, p90Median, p90Max, pctLabel) {
       name: risk,
       x: pts.map(d => d.MedianAQI_5yr),
       y: pts.map(d => d.MaxAQI_5yr),
-      text: pts.map(d => `${d.County}, ${d.State}<br>Median AQI: ${d.MedianAQI_5yr.toFixed(1)}<br>Max AQI: ${d.MaxAQI_5yr.toFixed(1)}`),
+      text: pts.map(d => `${d.County}, ${d.State}<br>Avg Median AQI: ${d.MedianAQI_5yr.toFixed(1)}<br>Avg Max AQI: ${d.MaxAQI_5yr.toFixed(1)}`),
       hovertemplate: '%{text}<extra></extra>',
       marker: { size: 9, color: COLORS[risk], opacity: 0.78 }
     };
   });
 
+  // Threshold lines
   const shapes = [
-    { type: 'line', x0: p90Median, x1: p90Median, y0: 0, y1: 1, yref: 'paper', line: { color: 'rgba(255,255,255,0.65)', dash: 'dash', width: 2 } },
-    { type: 'line', y0: p90Max, y1: p90Max, x0: 0, x1: 1, xref: 'paper', line: { color: 'rgba(255,255,255,0.65)', dash: 'dash', width: 2 } }
+    { type: 'line', x0: thrMedian, x1: thrMedian, y0: 0, y1: 1, yref: 'paper', line: { color: 'rgba(255,255,255,0.65)', dash: 'dash', width: 2 } },
+    { type: 'line', y0: thrMax, y1: thrMax, x0: 0, x1: 1, xref: 'paper', line: { color: 'rgba(255,255,255,0.65)', dash: 'dash', width: 2 } }
+  ];
+
+  // In-chart dropdown: Top 5 counties for each state
+  const states = Array.from(new Set(data.map(d => d.State))).sort();
+  const baseAnno = {
+    xref: 'paper', yref: 'paper', x: 0.01, y: 0.99,
+    xanchor: 'left', yanchor: 'top',
+    align: 'left',
+    text: '<b>Select a state</b><br>Use the dropdown to show Top 5 counties (chronic + acute).',
+    showarrow: false,
+    bgcolor: 'rgba(0,0,0,0.35)',
+    bordercolor: 'rgba(255,255,255,0.18)',
+    borderwidth: 1,
+    borderpad: 10,
+    font: { size: 12, color: '#e8ecf3' }
+  };
+
+  const buttons = [
+    {
+      label: 'Select state…',
+      method: 'relayout',
+      args: [{ annotations: [baseAnno] }]
+    },
+    ...states.map(st => ({
+      label: st,
+      method: 'relayout',
+      args: [{ annotations: [{ ...baseAnno, text: buildTop5Text(data, st) }] }]
+    }))
   ];
 
   Plotly.newPlot(divId, traces, {
@@ -157,13 +230,34 @@ function renderScatter(divId, data, p90Median, p90Max, pctLabel) {
     paper_bgcolor: 'rgba(0,0,0,0)',
     plot_bgcolor: 'rgba(0,0,0,0)',
     font: { color: '#e8ecf3' },
-    xaxis: { title: 'Median AQI (Daily “Grind”)', gridcolor: 'rgba(255,255,255,0.10)' },
-    yaxis: { title: 'Max AQI (Extreme Events)', gridcolor: 'rgba(255,255,255,0.10)' },
+    xaxis: { title: 'Avg Median AQI (Daily “Grind”)', gridcolor: 'rgba(255,255,255,0.10)' },
+    yaxis: { title: 'Avg Max AQI (Extreme Events)', gridcolor: 'rgba(255,255,255,0.10)' },
     shapes,
-    margin: { l: 70, r: 20, t: 70, b: 60 },
-    height: 650,
-    legend: { orientation: 'h', y: -0.15 }
-  }, { responsive: true, displayModeBar: false });
+    annotations: [baseAnno],
+    updatemenus: [
+      {
+        type: 'dropdown',
+        direction: 'down',
+        x: 0.01,
+        y: 1.15,
+        xanchor: 'left',
+        yanchor: 'top',
+        bgcolor: 'rgba(0,0,0,0.35)',
+        bordercolor: 'rgba(255,255,255,0.18)',
+        font: { color: '#e8ecf3' },
+        buttons
+      }
+    ],
+    margin: { l: 70, r: 20, t: 90, b: 60 },
+    height: 680,
+    legend: { orientation: 'h', y: -0.18 }
+  }, {
+    responsive: true,
+    displayModeBar: true,
+    // Ensure zoom controls are available (zoom in/out + reset)
+    modeBarButtonsToAdd: ['zoomIn2d','zoomOut2d','autoScale2d','resetScale2d'],
+    displaylogo: false
+  });
 }
 
 // ---------- Main controller ----------
@@ -195,29 +289,73 @@ function updateDashboard() {
   const scoped = applyScope(AGG_5YR, scope);
 
   const p = pct / 100;
-  const pMed = percentile(scoped.map(d => d.MedianAQI_5yr), p);
-  const pMax = percentile(scoped.map(d => d.MaxAQI_5yr), p);
+  const thrMedian = percentile(scoped.map(d => d.MedianAQI_5yr), p);
+  const thrMax = percentile(scoped.map(d => d.MaxAQI_5yr), p);
 
-  const labeled = classify(scoped, pMed, pMax);
+  const labeled = classify(scoped, thrMedian, thrMax);
 
   // KPIs
   setText('kpi-total', String(labeled.length));
   const djCount = labeled.filter(d => d.Risk === 'Double Jeopardy').length;
   setText('kpi-dj', String(djCount));
-  setText('kpi-chronic', Number.isFinite(pMed) ? pMed.toFixed(1) : '—');
-  setText('kpi-acute', Number.isFinite(pMax) ? pMax.toFixed(1) : '—');
+  setText('kpi-chronic', Number.isFinite(thrMedian) ? thrMedian.toFixed(1) : '—');
+  setText('kpi-acute', Number.isFinite(thrMax) ? thrMax.toFixed(1) : '—');
 
   // Story callout
   setText('story-total', String(labeled.length));
   setText('story-dj', String(djCount));
 
-  // Top lists
-  const topChronic = [...labeled].sort((a,b) => b.MedianAQI_5yr - a.MedianAQI_5yr).slice(0, 15);
-  const topAcute = [...labeled].sort((a,b) => b.MaxAQI_5yr - a.MaxAQI_5yr).slice(0, 15);
+  // ---- Chart 1 & 2: state on x-axis, avg median/max on y-axis ----
+  const byState = new Map();
+  for (const d of labeled) {
+    if (!byState.has(d.State)) byState.set(d.State, { State: d.State, medSum: 0, maxSum: 0, n: 0 });
+    const s = byState.get(d.State);
+    s.medSum += d.MedianAQI_5yr;
+    s.maxSum += d.MaxAQI_5yr;
+    s.n += 1;
+  }
+  const stateRows = Array.from(byState.values())
+    .map(s => ({
+      State: s.State,
+      AvgMedian: s.medSum / s.n,
+      AvgMax: s.maxSum / s.n
+    }))
+    .sort((a,b) => a.State.localeCompare(b.State));
 
-  renderTopBar('chart-chronic', 'Top 15 Chronic Burden (Median AQI)', topChronic, 'MedianAQI_5yr', COLORS['High Chronic']);
-  renderTopBar('chart-acute', 'Top 15 Acute Events (Max AQI)', topAcute, 'MaxAQI_5yr', COLORS['High Acute']);
-  renderScatter('chart-scatter', labeled, pMed, pMax, pct);
+  renderStateBars(
+    'chart-chronic',
+    'Chronic Burden by State (Avg of Counties’ 5-year Median AQI)',
+    stateRows.map(d => d.State),
+    stateRows.map(d => d.AvgMedian),
+    'Avg Median AQI',
+    COLORS['High Chronic']
+  );
+
+  renderStateBars(
+    'chart-acute',
+    'Acute Events by State (Avg of Counties’ 5-year Max AQI)',
+    stateRows.map(d => d.State),
+    stateRows.map(d => d.AvgMax),
+    'Avg Max AQI',
+    COLORS['High Acute']
+  );
+
+  // ---- Chart 4: most livable counties (lowest avg median AQI) ----
+  const livable = [...labeled]
+    .sort((a,b) => a.MedianAQI_5yr - b.MedianAQI_5yr)
+    .slice(0, 15);
+
+  renderHorizontalBar(
+    'chart-livable',
+    'Top 15 Most Livable Counties (Lowest Avg Median AQI)',
+    livable.map(d => `${d.County}, ${d.State}`).reverse(),
+    livable.map(d => d.MedianAQI_5yr).reverse(),
+    'Avg Median AQI',
+    '#5dd6a7'
+  );
+
+  // ---- Scatter (with dropdown + zoom controls) ----
+  renderScatter('chart-scatter', labeled, thrMedian, thrMax, pct);
 }
 
 async function init() {
