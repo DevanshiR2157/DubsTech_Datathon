@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Double Jeopardy | Air Quality Analysis 2021-2025</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-container">
+            <div class="nav-brand">DOUBLE JEOPARDY</div>
+            <div class="nav-links">
+                <a href="#intro">The Story</a>
+                <a href="#chronic">Chronic</a>
+                <a href="#acute">Acute</a>
+                <a href="#explorer">Explorer</a>
+                <a href="#action">Action</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">The Invisible Tax</h1>
+            <p class="hero-subtitle">A five-year investigation into America's most vulnerable communities</p>
+            <div class="hero-stats">
+                <div class="stat">
+                    <div class="stat-number" id="stat-counties">0</div>
+                    <div class="stat-label">Counties Analyzed</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="stat-dj">0</div>
+                    <div class="stat-label">Double Jeopardy Zones</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">2021–25</div>
+                    <div class="stat-label">Data Period</div>
+                </div>
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <div class="scroll-arrow"></div>
+        </div>
+    </header>
+
+    <!-- Introduction -->
+    <section id="intro" class="section section-intro">
+        <div class="container-narrow">
+            <h2 class="section-title">Beyond the Weather Report</h2>
+            <div class="prose">
+                <p class="lead">Air quality is often dismissed as a temporary inconvenience—a "smoky day" or a "smog alert." But for millions of Americans, poor air is not an event. It's infrastructure.</p>
+                
+                <p>Using five years of EPA data spanning 2021 to 2025, we mapped a crisis hiding in plain sight: counties where residents face both <strong>chronic daily exposure</strong> to elevated pollution and <strong>acute emergency events</strong> that spike air quality into hazardous territory.</p>
+                
+                <p>We call this <em>Double Jeopardy</em>—and we found 37 counties trapped in it.</p>
+            </div>
+
+            <div class="concept-cards">
+                <div class="concept-card chronic-card">
+                    <div class="concept-icon">📊</div>
+                    <h3>The Daily Grind</h3>
+                    <p><strong>Chronic Exposure</strong> is measured by median AQI—the baseline air quality residents breathe on a typical Tuesday. This is often tied to permanent factors: industrial corridors, highway proximity, or geographic basins that trap pollution.</p>
+                    <div class="concept-metric">Top 10% Threshold: <span id="chronic-thresh">0</span> AQI</div>
+                </div>
+                
+                <div class="concept-card acute-card">
+                    <div class="concept-icon">⚠️</div>
+                    <h3>The Sudden Shock</h3>
+                    <p><strong>Acute Events</strong> are captured by maximum AQI—the single worst day on record. These spikes come from wildfires, industrial accidents, or extreme weather. They trigger emergency room visits and school closures.</p>
+                    <div class="concept-metric">Top 10% Threshold: <span id="acute-thresh">0</span> AQI</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Act 1: Chronic -->
+    <section id="chronic" class="section section-dark">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-label">Act I</span>
+                <h2 class="section-title">The Counties That Never Catch Their Breath</h2>
+                <p class="section-description">These communities face persistently elevated pollution levels year after year. The air quality index on an average day is what other counties only experience during emergencies.</p>
+            </div>
+            
+            <div class="chart-container">
+                <div id="chronic-chart"></div>
+            </div>
+
+            <div class="insight-box">
+                <div class="insight-icon">💡</div>
+                <div class="insight-content">
+                    <h4>Why This Matters</h4>
+                    <p>Chronic exposure means bodies never fully recover. Respiratory systems are in a constant state of stress, making residents more vulnerable when acute events strike. This is the "compounded risk" that defines Double Jeopardy.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Act 2: Acute -->
+    <section id="acute" class="section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-label">Act II</span>
+                <h2 class="section-title">When the Sky Turns Red</h2>
+                <p class="section-description">These are the counties that have experienced the most severe air quality emergencies—days when AQI readings reach hazardous levels and outdoor activity becomes dangerous.</p>
+            </div>
+            
+            <div class="chart-container">
+                <div id="acute-chart"></div>
+            </div>
+
+            <div class="insight-box insight-box-warning">
+                <div class="insight-icon">🚨</div>
+                <div class="insight-content">
+                    <h4>The Emergency Response Gap</h4>
+                    <p>A county with low median but high max AQI only needs seasonal preparedness—mobile units during fire season. But Double Jeopardy counties need year-round, permanent monitoring infrastructure because they face both chronic baseline pollution and acute crises.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Act 3: The Explorer -->
+    <section id="explorer" class="section section-explorer">
+        <div class="container-full">
+            <div class="section-header centered">
+                <span class="section-label">Act III</span>
+                <h2 class="section-title">The Double Jeopardy Map</h2>
+                <p class="section-description">Where chronic exposure intersects with acute events, we find America's most vulnerable communities.</p>
+            </div>
+
+            <div class="dashboard">
+                <div class="dashboard-sidebar">
+                    <div class="controls-panel">
+                        <h3>Explore the Data</h3>
+                        <p class="control-description">Filter by state to see regional patterns</p>
+                        
+                        <div class="control-group">
+                            <label>Select State</label>
+                            <select id="state-filter" class="state-select">
+                                <option value="ALL">All United States</option>
+                            </select>
+                        </div>
+
+                        <div class="legend">
+                            <h4>Risk Categories</h4>
+                            <div class="legend-item">
+                                <span class="legend-dot dj-dot"></span>
+                                <div class="legend-text">
+                                    <strong>Double Jeopardy</strong>
+                                    <span>High chronic + High acute</span>
+                                </div>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-dot chronic-dot"></span>
+                                <div class="legend-text">
+                                    <strong>High Chronic</strong>
+                                    <span>Persistent daily exposure</span>
+                                </div>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-dot acute-dot"></span>
+                                <div class="legend-text">
+                                    <strong>High Acute</strong>
+                                    <span>Severe spike events</span>
+                                </div>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-dot low-dot"></span>
+                                <div class="legend-text">
+                                    <strong>Low Risk</strong>
+                                    <span>Below 90th percentile</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="details-panel" id="details-panel">
+                        <div class="details-placeholder">
+                            <div class="details-icon">👆</div>
+                            <p>Hover over a county to see detailed statistics</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-main">
+                    <div class="chart-wrapper">
+                        <div id="scatter-plot"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- The Double Jeopardy Counties -->
+    <section class="section section-dj-list">
+        <div class="container">
+            <h2 class="section-title centered">The 37 Counties in Double Jeopardy</h2>
+            <p class="section-description centered">These communities face the highest combined risk—chronic daily pollution compounded by severe acute events.</p>
+            
+            <div class="table-container">
+                <table class="dj-table" id="dj-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>County</th>
+                            <th>State</th>
+                            <th>Avg Median AQI<br><span class="th-subtitle">(Daily Baseline)</span></th>
+                            <th>Avg Max AQI<br><span class="th-subtitle">(Worst Event)</span></th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Action Plan -->
+    <section id="action" class="section section-action">
+        <div class="container">
+            <div class="section-header centered">
+                <h2 class="section-title">From Data to Action</h2>
+                <p class="section-description">Identifying these 37 counties transforms analysis into intervention. Here's how this data can drive policy.</p>
+            </div>
+
+            <div class="action-grid">
+                <div class="action-card">
+                    <div class="action-number">01</div>
+                    <div class="action-icon">🏥</div>
+                    <h3>Public Health Triage</h3>
+                    <div class="action-body">
+                        <p class="action-insight"><strong>The Problem:</strong> Residents in Double Jeopardy zones face compounded risk. Their respiratory systems never recover from chronic exposure before the next acute spike hits.</p>
+                        <div class="action-recommendation">
+                            <strong>Recommendation:</strong> Prioritize these 37 counties for respiratory clinic funding, subsidized inhalers, and HEPA filter distribution to schools and nursing homes.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-card">
+                    <div class="action-number">02</div>
+                    <div class="action-icon">🌳</div>
+                    <h3>Green Infrastructure</h3>
+                    <div class="action-body">
+                        <p class="action-insight"><strong>The Problem:</strong> Chronic pollution often follows permanent geographic or infrastructure patterns—industrial valleys, highway corridors, ports.</p>
+                        <div class="action-recommendation">
+                            <strong>Recommendation:</strong> Deploy "green buffers"—dense urban forests and vegetation barriers—in these specific counties to filter daily particulates and provide cooling during heat-driven pollution events.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-card">
+                    <div class="action-number">03</div>
+                    <div class="action-icon">📡</div>
+                    <h3>Monitoring Infrastructure</h3>
+                    <div class="action-body">
+                        <p class="action-insight"><strong>The Problem:</strong> Counties with only acute risk can rely on seasonal monitoring. But Double Jeopardy counties need constant vigilance.</p>
+                        <div class="action-recommendation">
+                            <strong>Recommendation:</strong> Replace temporary mobile monitoring units with permanent, high-precision sensor networks providing 24/7 air quality data and real-time alerts.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-card">
+                    <div class="action-number">04</div>
+                    <div class="action-icon">💰</div>
+                    <h3>Economic Policy</h3>
+                    <div class="action-body">
+                        <p class="action-insight"><strong>The Problem:</strong> Poor air quality creates a hidden "Clean Air Tax"—higher healthcare costs, reduced property values, lost productivity.</p>
+                        <div class="action-recommendation">
+                            <strong>Recommendation:</strong> Insurance companies and municipal planners should factor this data into risk models, health premium calculations, and infrastructure investment decisions.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Methodology -->
+    <section class="section section-methodology">
+        <div class="container-narrow">
+            <h2 class="section-title">Methodology</h2>
+            <div class="prose">
+                <h3>Data Sources</h3>
+                <p>This analysis uses EPA Annual Air Quality Index (AQI) data from 2021 through 2025, covering 994 counties across the United States with consistent reporting.</p>
+
+                <h3>Risk Classification</h3>
+                <p>Counties were classified based on two metrics:</p>
+                <ul>
+                    <li><strong>Median AQI:</strong> Five-year average of median daily AQI (chronic exposure)</li>
+                    <li><strong>Max AQI:</strong> Five-year average of maximum recorded AQI (acute events)</li>
+                </ul>
+                <p>The top 10% of counties for each metric were identified as "high risk" for that category. Counties appearing in both top 10% groups were classified as "Double Jeopardy."</p>
+
+                <h3>Limitations</h3>
+                <p>This analysis focuses on air quality metrics and does not account for population density, socioeconomic factors, or health outcomes. The 90th percentile threshold is a statistical convenience; actual health impacts may vary.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>About This Project</h4>
+                    <p>Created for the 7th DubsTech Datathon, University of Washington</p>
+                    <p>February 2026</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Data Source</h4>
+                    <p>EPA Air Quality System (AQS)</p>
+                    <p>Annual AQI by County: 2021–2025</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Tools Used</h4>
+                    <p>Python, Pandas, Plotly</p>
+                    <p>Analysis code available on request</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
