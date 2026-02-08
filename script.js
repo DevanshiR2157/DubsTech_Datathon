@@ -6,16 +6,12 @@ async function init() {
     if (!res.ok) throw new Error("Failed to fetch JSON");
 
     const raw = await res.json();
+    console.log("RAW JSON:", raw);
 
-    // Normalize data shape
-    const counties = Array.isArray(raw)
-      ? raw
-      : Array.isArray(raw.counties)
-        ? raw.counties
-        : [];
+    const counties = normalizeCounties(raw);
 
     if (counties.length === 0) {
-      throw new Error("No county data found");
+      throw new Error("No county data found after normalization");
     }
 
     // ---- STATS ----
@@ -32,12 +28,29 @@ async function init() {
   } catch (err) {
     console.error(err);
     document.body.innerHTML = `
-      <h1 style="padding:40px;color:red">
-        Dashboard failed to load
-      </h1>
+      <h1 style="padding:40px;color:red">Dashboard failed to load</h1>
       <pre>${err.message}</pre>
+      <p>Open DevTools → Console and scroll to <b>RAW JSON</b></p>
     `;
   }
+}
+
+/* ---------- NORMALIZER ---------- */
+
+function normalizeCounties(raw) {
+  // Case 1: already an array
+  if (Array.isArray(raw)) return raw;
+
+  // Case 2: wrapped array
+  if (Array.isArray(raw.counties)) return raw.counties;
+  if (Array.isArray(raw.data)) return raw.data;
+
+  // Case 3: object map
+  if (typeof raw.counties === "object") {
+    return Object.values(raw.counties);
+  }
+
+  return [];
 }
 
 /* ---------- CHARTS ---------- */
@@ -48,10 +61,7 @@ function renderChronic(data) {
     orientation: "h",
     x: data.map(d => d.median_aqi),
     y: data.map(d => `${d.county}, ${d.state}`)
-  }], {
-    margin: { l: 200 },
-    xaxis: { title: "Median AQI" }
-  });
+  }], { margin: { l: 200 } });
 }
 
 function renderAcute(data) {
@@ -60,10 +70,7 @@ function renderAcute(data) {
     orientation: "h",
     x: data.map(d => d.max_aqi),
     y: data.map(d => `${d.county}, ${d.state}`)
-  }], {
-    margin: { l: 200 },
-    xaxis: { title: "Max AQI" }
-  });
+  }], { margin: { l: 200 } });
 }
 
 function renderScatter(data) {
