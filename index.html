@@ -30,9 +30,10 @@
         <div class="control">
           <label for="scope">Scope</label>
           <select id="scope">
-            <option value="all" selected>All rows in CSVs</option>
+            <option value="all" selected>All rows in data</option>
             <option value="us">U.S. states + DC only</option>
           </select>
+          <div class="help">Applies to charts + thresholds.</div>
         </div>
 
         <div class="control">
@@ -41,7 +42,7 @@
             <input id="topn-chronic" type="range" min="5" max="50" step="1" value="15" />
             <span class="pill"><span id="topn-chronic-value">15</span></span>
           </div>
-          <div class="help">How many counties to show in Chart 1 (default 15).</div>
+          <div class="help">Chart 1 count (default 15).</div>
         </div>
 
         <div class="control">
@@ -50,7 +51,7 @@
             <input id="topn-acute" type="range" min="5" max="50" step="1" value="15" />
             <span class="pill"><span id="topn-acute-value">15</span></span>
           </div>
-          <div class="help">How many counties to show in Chart 2 (default 15).</div>
+          <div class="help">Chart 2 count (default 15).</div>
         </div>
       </div>
 
@@ -64,13 +65,12 @@
   </header>
 
   <section id="error-box" class="error" style="display:none;">
-    <h2>Error Loading Data</h2>
-    <p id="error-details" class="mono"></p>
+    <h2>Dashboard Error</h2>
+    <p class="caption">One or more files failed to load. Details:</p>
+    <pre class="mono" id="error-details"></pre>
     <div class="hint">
-      <p><strong>Quick fix:</strong> serve this folder with a local server (don’t open <code>index.html</code> directly).</p>
-      <pre><code>python -m http.server 8000
-# then open http://localhost:8000</code></pre>
-      <p>For GitHub Pages, commit all files and enable Pages in your repo settings.</p>
+      <p><strong>Local run:</strong> <code>python -m http.server 8000</code> then open <code>http://localhost:8000</code>.</p>
+      <p><strong>GitHub Pages:</strong> ensure your repo root contains <code>dashboard_data.json</code> and the annual CSVs.</p>
     </div>
   </section>
 
@@ -81,7 +81,7 @@
         <strong>Which counties face both frequent and severe pollution?</strong>
         We measure frequency using a county’s <em>5-year average Median AQI</em> (the daily “grind”) and severity using its
         <em>5-year average Max AQI</em> (extreme events). Counties in the <strong>top 10%</strong> for both metrics are labeled
-        <strong>“Double Jeopardy”</strong> — places that never get a break, and when they get hit, they get hit hard.
+        <strong>“Double Jeopardy”</strong>.
       </p>
       <p class="callout">
         In this run, we identify <strong><span id="story-dj">—</span></strong> Double Jeopardy counties out of
@@ -108,8 +108,8 @@
 
       <div class="scatter-head">
         <p class="caption">
-          Scatter of 5-year average metrics per county. Dashed lines are the 90th percentile thresholds.
-          Use the Plotly toolbar to zoom in/out. Select a state to focus the plot.
+          Scatter of 5-year average metrics per county (Mono County, CA removed as an outlier).
+          Use Plotly controls to zoom in/out. Select a state to focus.
         </p>
         <div class="scatter-controls">
           <label for="state-select">Focus state</label>
@@ -144,16 +144,12 @@
 
     <section class="panel">
       <h2>5) Geospatial Heatmap: High AQI Days by State (2021–2025)</h2>
-      <p class="caption">
-        State-level choropleth of high-AQI days across 2021–2025 (sum of Unhealthy for Sensitive Groups + Unhealthy + Very Unhealthy + Hazardous).
-      </p>
+      <p class="caption">State choropleth built from annual CSVs (sum of USG + Unhealthy + Very Unhealthy + Hazardous days).</p>
       <div id="chart-heatmap" class="chart tall"></div>
     </section>
 
     <footer class="footer">
-      <p>
-        Built as a lightweight static dashboard using CSV + Plotly. Data: annual AQI by county (2021–2025).
-      </p>
+      <p>Static dashboard using Plotly + PapaParse. Data: AQI 2021–2025.</p>
     </footer>
   </main>
 

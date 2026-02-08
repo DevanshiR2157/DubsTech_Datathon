@@ -5,6 +5,7 @@ html, body { margin: 0; padding: 0; }
 :root {
   --bg: #0b1020;
   --panel: rgba(255,255,255,0.06);
+  --panel-2: rgba(255,255,255,0.08);
   --text: #e8ecf3;
   --muted: rgba(232,236,243,0.75);
   --border: rgba(255,255,255,0.10);
@@ -14,6 +15,7 @@ html, body { margin: 0; padding: 0; }
   --chronic: #ff8a3d;
   --acute: #ff4d5e;
   --dj: #b16cff;
+  --livable: #5dd6a7;
 }
 
 body {
@@ -170,7 +172,7 @@ select {
 }
 
 .chart { width: 100%; min-height: 420px; }
-.chart.tall { min-height: 620px; }
+.chart.tall { min-height: 640px; }
 
 .legend-note {
   display: flex;
@@ -221,7 +223,7 @@ select {
   overflow-x: auto;
 }
 
-/* Scatter + side panel layout */
+/* Scatter + side layout */
 .scatter-head {
   display: flex;
   gap: 14px;

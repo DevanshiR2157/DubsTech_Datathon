@@ -1,26 +1,29 @@
-# Double Jeopardy: Air Quality Analysis (2021–2025)
+# Double Jeopardy Dashboard (2021–2025)
 
-Static dashboard (GitHub Pages friendly). Loads annual AQI by county CSVs (2021–2025) in-browser and builds interactive charts.
+This is a **static** dashboard intended for **GitHub Pages**.
 
-## Includes
+## Required files in repo root
 
-1) Chronic: Top N counties by 5-year average **Median AQI**
-2) Acute: Top N counties by 5-year average **Max AQI**
-3) Scatter: Chronic vs Acute with **Double Jeopardy** zone (top 10% thresholds)
-4) Side bar: Top 5 Double Jeopardy counties (updates with selected state)
-5) Choropleth heatmap: High AQI days by state (2021–2025)
+- `index.html`
+- `style.css`
+- `script.js`
+- `dashboard_data.json`
+- `annual_aqi_by_county_2021.csv`
+- `annual_aqi_by_county_2022.csv`
+- `annual_aqi_by_county_2023.csv`
+- `annual_aqi_by_county_2024.csv`
+- `annual_aqi_by_county_2025.csv`
 
-## Outlier handling
+## Notes
 
-- The point **Mono County, California** is excluded from the **scatter plot only** (to avoid extreme-scale distortion). Thresholds/KPIs are unchanged.
+- The charts are built from `dashboard_data.json`.
+- The choropleth heatmap uses the annual CSVs to compute high-AQI days.
+- **Mono County, California** is excluded from the scatter plot only.
 
 ## Run locally
 
 ```bash
 python -m http.server 8000
 ```
-Open: http://localhost:8000
 
-## Deploy
-
-Commit everything and enable GitHub Pages from Settings → Pages.
+Then open: http://localhost:8000
