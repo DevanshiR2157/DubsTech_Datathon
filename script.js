@@ -35,39 +35,55 @@ document.addEventListener('DOMContentLoaded', function() {
 // Load and process data
 async function loadData() {
     try {
-        const response = await fetch('dashboard_data.json');
+        const response = await fetch('./dashboard_data.json');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         globalData = await response.json();
+        
+        if (!globalData || !globalData.metadata) {
+            throw new Error('Invalid data format');
+        }
         
         initializeDashboard();
     } catch (error) {
         console.error('Error loading data:', error);
-        showError();
+        showError(error.message);
     }
 }
 
 // Initialize all components
 function initializeDashboard() {
-    // Animate stats
-    animateValue('stat-counties', 0, globalData.metadata.total_counties, 2000);
-    animateValue('stat-dj', 0, globalData.metadata.dj_count, 2000);
-    
-    // Update thresholds
-    document.getElementById('chronic-thresh').textContent = globalData.metadata.chronic_threshold;
-    document.getElementById('acute-thresh').textContent = globalData.metadata.acute_threshold;
-    
-    // Populate state filter
-    populateStateFilter();
-    
-    // Render charts
-    renderChronicChart();
-    renderAcuteChart();
-    renderScatterPlot('ALL');
-    
-    // Render basket analysis
-    renderDJBasket();
-    
-    // Add scroll animations
-    addScrollAnimations();
+    try {
+        // Update thresholds
+        document.getElementById('chronic-thresh').textContent = globalData.metadata.chronic_threshold;
+        document.getElementById('acute-thresh').textContent = globalData.metadata.acute_threshold;
+        
+        // Update stats
+        const statCounties = document.getElementById('stat-counties');
+        const statDJ = document.getElementById('stat-dj');
+        
+        if (statCounties) statCounties.textContent = globalData.metadata.total_counties;
+        if (statDJ) statDJ.textContent = globalData.metadata.dj_count;
+        
+        // Populate state filter
+        populateStateFilter();
+        
+        // Render charts
+        renderChronicChart();
+        renderAcuteChart();
+        renderScatterPlot('ALL');
+        
+        // Render basket analysis
+        renderDJBasket();
+        
+        console.log('Dashboard initialized successfully!');
+    } catch (error) {
+        console.error('Error initializing dashboard:', error);
+        showError('Error initializing dashboard: ' + error.message);
+    }
 }
 
 // Animate number counting
@@ -590,11 +606,47 @@ function addScrollAnimations() {
 }
 
 // Error handling
-function showError() {
+function showError(message) {
     document.body.innerHTML = `
-        <div style="display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column; font-family: Inter, sans-serif;">
-            <h1 style="color: #dc2626; margin-bottom: 1rem;">Error Loading Data</h1>
-            <p style="color: #666;">Please ensure dashboard_data.json is in the same directory as index.html</p>
+        <div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; flex-direction: column; font-family: 'Mulish', sans-serif; padding: 20px; text-align: center; background: #f8f9fa;">
+            <h1 style="color: #dc2626; margin-bottom: 1rem; font-size: 2.5rem;">Error Loading Data</h1>
+            <p style="color: #666; font-size: 1.1rem; max-width: 600px; margin-bottom: 2rem;">
+                ${message || 'Could not load dashboard_data.json - This is likely a browser security restriction'}
+            </p>
+            <div style="background: white; padding: 2rem; border-radius: 8px; max-width: 700px; text-align: left; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <h3 style="margin-top: 0; color: #00425a;">✅ Quick Fix:</h3>
+                <p style="color: #333; line-height: 1.8; margin: 1rem 0;">
+                    Open a terminal/command prompt in the same folder as your files and run:
+                </p>
+                <div style="background: #1f8a70; padding: 1rem; border-radius: 6px; color: white; font-family: monospace; margin: 1rem 0;">
+                    python -m http.server 8000
+                </div>
+                <p style="color: #333; line-height: 1.8; margin: 1rem 0;">
+                    Then open your browser and go to:
+                </p>
+                <div style="background: #bfdb38; padding: 1rem; border-radius: 6px; font-family: monospace; margin: 1rem 0;">
+                    http://localhost:8000
+                </div>
+                
+                <hr style="margin: 2rem 0; border: none; border-top: 1px solid #e5e7eb;">
+                
+                <h3 style="color: #00425a;">📋 Checklist:</h3>
+                <ol style="line-height: 1.8; color: #333;">
+                    <li><strong>All files in the same folder:</strong>
+                        <ul style="margin: 0.5rem 0;">
+                            <li>✓ index.html</li>
+                            <li>✓ style.css</li>
+                            <li>✓ script.js</li>
+                            <li>✓ dashboard_data.json</li>
+                        </ul>
+                    </li>
+                    <li><strong>Don't open index.html directly</strong> - Use a local server (see above)</li>
+                    <li><strong>For deployment:</strong> Upload all files to GitHub Pages</li>
+                </ol>
+            </div>
+            <p style="margin-top: 2rem; color: #999; font-size: 0.9rem;">
+                Press F12 to open browser console for more technical details
+            </p>
         </div>
     `;
 }

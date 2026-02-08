@@ -1,164 +1,104 @@
-# Double Jeopardy: Air Quality Analysis Website
+# Double Jeopardy: Air Quality Analysis 2021-2025
 
-A professional data journalism website analyzing 5 years of EPA air quality data (2021-2025) to identify US counties facing both chronic pollution exposure and acute air quality emergencies.
+A data-driven analysis identifying 37 U.S. counties facing both chronic daily pollution and acute emergency air quality events.
 
-## 🎯 Project Overview
+## 🚀 Quick Start
 
-This website tells the story of "Double Jeopardy" counties—communities trapped between persistent poor air quality and severe pollution spikes. Through interactive visualizations and compelling narrative, it transforms EPA data into actionable policy recommendations.
+### Local Development
 
-## 📁 Files Included
+**Option 1: Python HTTP Server (Recommended)**
+```bash
+# Navigate to the project folder
+cd /path/to/your/project
 
-- `index.html` - Main HTML structure with storytelling layout
-- `style.css` - Professional CSS styling (modern, responsive design)
-- `script.js` - Interactive JavaScript (Plotly charts, state filtering)
-- `dashboard_data.json` - Processed data from 5 years of EPA AQI reports
-- `README.md` - This file
+# Start the server
+python -m http.server 8000
 
-## 🚀 Deployment Instructions
+# Open in browser
+http://localhost:8000
+```
 
-### Option 1: GitHub Pages (Recommended)
+**Option 2: Python 2**
+```bash
+python -m SimpleHTTPServer 8000
+```
 
-1. **Create a new GitHub repository**
-   ```bash
-   # On GitHub, click "New Repository"
-   # Name it something like: datathon-2026-air-quality
-   ```
+**Option 3: Node.js**
+```bash
+npx http-server -p 8000
+```
 
-2. **Upload files**
-   - Upload all 4 files (index.html, style.css, script.js, dashboard_data.json)
-   - You can drag and drop directly on GitHub's website
+### Deploy to GitHub Pages
 
-3. **Enable GitHub Pages**
-   - Go to repository Settings
-   - Click "Pages" in the left sidebar
-   - Under "Source", select `main` branch
-   - Click "Save"
-   - Your site will be live at: `https://[your-username].github.io/[repo-name]/`
+1. Create a new repository on GitHub
+2. Upload all files:
+   - index.html
+   - style.css
+   - script.js
+   - dashboard_data.json
+   - README.md
 
-### Option 2: Local Testing
+3. Go to **Settings** → **Pages**
+4. Under "Source", select **main** branch
+5. Click **Save**
+6. Your site will be live at: `https://[username].github.io/[repo-name]/`
 
-1. **Place all files in the same folder**
-   ```
-   project-folder/
-   ├── index.html
-   ├── style.css
-   ├── script.js
-   └── dashboard_data.json
-   ```
+## ⚠️ Important Notes
 
-2. **Start a local server**
-   
-   Using Python:
-   ```bash
-   # Python 3
-   python -m http.server 8000
-   ```
-   
-   Or using VS Code:
-   - Install "Live Server" extension
-   - Right-click index.html
-   - Select "Open with Live Server"
+- **Do NOT open index.html directly in your browser** - This will cause a security error preventing the JSON data from loading
+- Always use a local server for testing (see Quick Start above)
+- All 4 files must be in the same directory
 
-3. **Open in browser**
-   - Navigate to `http://localhost:8000`
+## 📊 Project Structure
+
+```
+project/
+├── index.html              # Main HTML file
+├── style.css               # Styling (Bella Slee inspired)
+├── script.js               # Interactive visualizations
+├── dashboard_data.json     # Processed EPA data (2021-2025)
+└── README.md              # This file
+```
 
 ## 🎨 Features
 
-### Interactive Components
-- **Animated Statistics**: Count-up animations for key metrics
-- **State Filter**: Drill down into specific state data
-- **Hover Details**: Dynamic county information panel
-- **Responsive Charts**: Three Plotly.js visualizations
-  - Chronic exposure bar chart
-  - Acute events bar chart
-  - Interactive scatter plot with log scale
+- **Rotating Title Animation** - Eye-catching entry point
+- **State-Colored Charts** - Geographic patterns at a glance
+- **Interactive Filters** - Explore by state
+- **Basket Analysis** - Visual clustering of 37 Double Jeopardy counties
+- **Hover Details** - Real-time county statistics
+- **Mobile Responsive** - Works on all devices
 
-### Storytelling Structure
-- **Hero Section**: Compelling introduction with key stats
-- **Act I**: The Daily Grind (chronic exposure)
-- **Act II**: When the Sky Turns Red (acute events)
-- **Act III**: The Explorer (interactive dashboard)
-- **Action Plan**: Policy recommendations
-- **Methodology**: Transparent data sourcing
+## 🏆 Data Analysis Highlights
 
-### Design Philosophy
-- Clean, modern aesthetic inspired by NYT and The Pudding
-- Professional typography (Crimson Pro + Inter)
-- Accessible color palette
-- Mobile-responsive layout
-- Smooth scroll animations
+- **994 counties analyzed** across 2021-2025
+- **37 counties identified** in "Double Jeopardy"
+- **68% concentrated** in Western U.S.
+- **California leads** with 12 counties (32% of total)
 
-## 📊 Data Summary
+## 📈 Technologies Used
 
-- **Total Counties Analyzed**: 994
-- **Double Jeopardy Counties**: 37
-- **Years Covered**: 2021-2025
-- **Data Source**: EPA Air Quality System (AQS)
+- HTML5
+- CSS3 (Mulish font, inspired by award-winning datathon projects)
+- JavaScript (Vanilla ES6+)
+- Plotly.js for interactive visualizations
+- EPA Air Quality Index data
 
-### Key Thresholds
-- Chronic Risk: 90th percentile of median AQI (49.2)
-- Acute Risk: 90th percentile of max AQI (162.7)
+## 🔧 Troubleshooting
 
-## 🔧 Technical Stack
+**Error: "Error Loading Data"**
+- Make sure you're using a local server (not opening file:// directly)
+- Check that dashboard_data.json is in the same folder
+- Try the Python HTTP server command above
 
-- **HTML5**: Semantic structure
-- **CSS3**: Custom properties, Grid, Flexbox
-- **JavaScript (ES6)**: Async/await, Fetch API
-- **Plotly.js 2.27.0**: Interactive charts
-- **Google Fonts**: Crimson Pro, Inter
+**Charts not displaying**
+- Open browser console (F12) and check for errors
+- Verify Plotly.js CDN is accessible
+- Ensure all files are in the same directory
 
-## 📝 Customization
+## 👥 Credits
 
-### Changing Colors
-Edit the CSS variables in `style.css`:
-```css
-:root {
-    --color-dj: #1e293b;      /* Double Jeopardy */
-    --color-chronic: #f59e0b;  /* Chronic exposure */
-    --color-acute: #dc2626;    /* Acute events */
-    --color-low: #cbd5e1;      /* Low risk */
-}
-```
+Created for the 2026 DubsTech Datathon
+Data Source: EPA Air Quality Index (2021-2025)
 
-### Updating Data
-Replace `dashboard_data.json` with new processed data following the same schema.
-
-## 🏆 Winning Elements
-
-Based on analysis of past Datathon winners, this project includes:
-
-1. **Narrative Arc**: Story-driven presentation, not just charts
-2. **Interactive Exploration**: Users can filter and discover insights
-3. **Policy Impact**: Clear connection from data to action
-4. **Professional Design**: Publication-quality aesthetics
-5. **Technical Depth**: Sophisticated data processing and visualization
-6. **Accessibility**: Clear explanations for non-technical audiences
-
-## 📧 Credits
-
-Created for the 7th DubsTech Datathon
-University of Washington, February 2026
-
-Data: EPA Air Quality System
-Analysis: Python, Pandas
-Visualization: Plotly.js
-
-## 🐛 Troubleshooting
-
-**Charts not showing?**
-- Ensure `dashboard_data.json` is in the same folder as `index.html`
-- Check browser console for errors (F12)
-- Verify you're serving via HTTP (not file://)
-
-**State filter empty?**
-- Data loaded successfully? Check console
-- JSON file properly formatted? Validate at jsonlint.com
-
-**Styling looks broken?**
-- Ensure `style.css` is in the same directory
-- Check that font CDN links are working (requires internet)
-
-## 📄 License
-
-This project is created for educational purposes as part of a university datathon.
-EPA data is public domain. Visualization code is available for academic use.
+Design inspiration: Bella Slee's award-winning 2023 datathon project
