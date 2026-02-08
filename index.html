@@ -67,243 +67,85 @@
         </div>
     </section>
 
-    <!-- Act 1: Chronic -->
-    <section id="chronic" class="section section-dark">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-label">Act I</span>
-                <h2 class="section-title">The Counties That Never Catch Their Breath</h2>
-                <p class="section-description">These communities face persistently elevated pollution levels year after year. The air quality index on an average day is what other counties only experience during emergencies.</p>
-            </div>
-            
-            <div class="chart-container">
-                <div id="chronic-chart"></div>
-            </div>
-
-            <div class="story-grid">
-                <div class="story-box">
-                    <div class="story-number">365</div>
-                    <div class="story-label">Days of Exposure</div>
-                    <p>Unlike seasonal events, chronic pollution is relentless. Residents breathe compromised air every single day, creating cumulative health damage.</p>
-                </div>
-                <div class="story-box">
-                    <div class="story-number">2.5x</div>
-                    <div class="story-label">Higher Asthma Rates</div>
-                    <p>Studies show chronic exposure areas experience significantly elevated rates of respiratory illness compared to national averages.</p>
-                </div>
-                <div class="story-box">
-                    <div class="story-number">$0</div>
-                    <div class="story-label">Recovery Window</div>
-                    <p>There's no "clean air season" in these counties. Respiratory systems remain in constant stress, never fully healing.</p>
-                </div>
-            </div>
-
-            <div class="insight-box">
-                <div class="insight-icon">💡</div>
-                <div class="insight-content">
-                    <h4>Why This Matters: The Baseline Health Crisis</h4>
-                    <p>Chronic exposure means bodies never fully recover. Respiratory systems are in a constant state of inflammation and stress. This creates a <strong>baseline vulnerability</strong>—when acute pollution spikes occur, these populations face exponentially higher risk of hospitalization.</p>
-                    <p class="insight-example"><strong>Real-World Impact:</strong> A child with asthma in San Bernardino County doesn't just struggle on "bad air days"—they struggle <em>every day</em>. By the time wildfire smoke arrives, their lungs are already compromised, turning a regional emergency into a personal health crisis.</p>
-                </div>
-            </div>
+    <!-- Chronic Exposure -->
+    <section>
+        <h2>The Daily Grind: Chronic Exposure</h2>
+        <p>
+            These communities face persistently elevated pollution levels year after year. The air quality index on an average day is what other counties only experience during emergencies. In the top 15 counties by chronic exposure, residents breathe compromised air <em>every single day</em>—365 days of exposure with no recovery window.
+        </p>
+        <p>
+            Notice the geographic clustering: California dominates this list with counties like Riverside, San Bernardino, and Los Angeles. This isn't random—it's the Central Valley and Southern California basin effect, where mountains trap pollution like a bowl. The chronic baseline creates a vulnerability multiplier: when acute events strike these areas, bodies already under stress face exponentially higher hospitalization risk.
+        </p>
+        <div class="chart-container">
+            <div id="chronic-chart"></div>
         </div>
     </section>
 
-    <!-- Act 2: Acute -->
-    <section id="acute" class="section">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-label">Act II</span>
-                <h2 class="section-title">When the Sky Turns Red</h2>
-                <p class="section-description">These are the counties that have experienced the most severe air quality emergencies—days when AQI readings reach hazardous levels and outdoor activity becomes dangerous.</p>
-            </div>
-            
-            <div class="chart-container">
-                <div id="acute-chart"></div>
-            </div>
-
-            <div class="case-study">
-                <div class="case-study-header">
-                    <div class="case-study-icon">🔥</div>
-                    <h3>Case Study: El Paso, Texas</h3>
-                </div>
-                <div class="case-study-body">
-                    <p>In our 5-year dataset, El Paso recorded an average maximum AQI of <strong>604</strong>—nearly twice the "hazardous" threshold. These aren't measurement errors; they're real events affecting real people.</p>
-                    <div class="case-study-stats">
-                        <div class="case-stat">
-                            <div class="case-stat-value">300+</div>
-                            <div class="case-stat-label">Hazardous Threshold</div>
-                        </div>
-                        <div class="case-stat">
-                            <div class="case-stat-value">604</div>
-                            <div class="case-stat-label">El Paso Avg Max AQI</div>
-                        </div>
-                        <div class="case-stat">
-                            <div class="case-stat-value">24hrs</div>
-                            <div class="case-stat-label">Indoor Shelter Required</div>
-                        </div>
-                    </div>
-                    <p class="case-study-conclusion">When AQI exceeds 300, health agencies recommend everyone—not just sensitive groups—avoid <em>all</em> outdoor activity. Schools close. Elderly residents face hospitalization. Economic activity halts.</p>
-                </div>
-            </div>
-
-            <div class="insight-box insight-box-warning">
-                <div class="insight-icon">🚨</div>
-                <div class="insight-content">
-                    <h4>The Preparedness Paradox</h4>
-                    <p>A county with <strong>low median but high max AQI</strong> experiences acute pollution as rare, predictable events—typically wildfire season. They can deploy mobile monitoring units, issue seasonal warnings, and prepare emergency response.</p>
-                    <p><strong>But Double Jeopardy counties need year-round vigilance.</strong> San Bernardino doesn't get a "clean air season." Their chronic baseline means emergency infrastructure can't be temporary—it must be permanent.</p>
-                    <p class="insight-recommendation">💡 <strong>Data-Driven Action:</strong> This analysis identifies exactly which 37 counties justify the capital expense of permanent, high-precision air monitoring networks instead of seasonal mobile units. The ROI isn't measured in weather forecasts—it's measured in lives saved.</p>
-                </div>
-            </div>
+    <!-- Acute Events -->
+    <section>
+        <h2>The Sudden Shock: Acute Events</h2>
+        <p>
+            When AQI exceeds 300, health agencies recommend everyone—not just sensitive groups—avoid all outdoor activity. Schools close. Elderly residents face hospitalization. Economic activity halts. These are the counties that have experienced the most severe air quality emergencies over the past five years.
+        </p>
+        <p>
+            El Paso, Texas recorded an average maximum AQI of <span class="highlight">604</span>—nearly twice the "hazardous" threshold of 300. Mono County, California saw readings over <span class="highlight">8,000 AQI</span>. These aren't measurement errors; they're real events affecting real people. The data reveals a critical distinction: counties with low median but high max AQI can rely on seasonal preparedness (mobile units during fire season). But Double Jeopardy counties need <em>year-round vigilance</em>.
+        </p>
+        <div class="chart-container">
+            <div id="acute-chart"></div>
         </div>
     </section>
 
-    <!-- Act 3: The Explorer -->
-    <section id="explorer" class="section section-explorer">
-        <div class="container-full">
-            <div class="section-header centered">
-                <span class="section-label">Act III</span>
-                <h2 class="section-title">The Double Jeopardy Map</h2>
-                <p class="section-description">Where chronic exposure intersects with acute events, we find America's most vulnerable communities.</p>
-            </div>
-
-            <div class="dashboard">
-                <div class="dashboard-sidebar">
-                    <div class="controls-panel">
-                        <h3>Explore the Data</h3>
-                        <p class="control-description">Filter by state to see regional patterns</p>
-                        
-                        <div class="control-group">
-                            <label>Select State</label>
-                            <select id="state-filter" class="state-select">
-                                <option value="ALL">All United States</option>
-                            </select>
-                        </div>
-
-                        <div class="legend">
-                            <h4>Risk Categories</h4>
-                            <div class="legend-item">
-                                <span class="legend-dot dj-dot"></span>
-                                <div class="legend-text">
-                                    <strong>Double Jeopardy</strong>
-                                    <span>High chronic + High acute</span>
-                                </div>
-                            </div>
-                            <div class="legend-item">
-                                <span class="legend-dot chronic-dot"></span>
-                                <div class="legend-text">
-                                    <strong>High Chronic</strong>
-                                    <span>Persistent daily exposure</span>
-                                </div>
-                            </div>
-                            <div class="legend-item">
-                                <span class="legend-dot acute-dot"></span>
-                                <div class="legend-text">
-                                    <strong>High Acute</strong>
-                                    <span>Severe spike events</span>
-                                </div>
-                            </div>
-                            <div class="legend-item">
-                                <span class="legend-dot low-dot"></span>
-                                <div class="legend-text">
-                                    <strong>Low Risk</strong>
-                                    <span>Below 90th percentile</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="details-panel" id="details-panel">
-                        <div class="details-placeholder">
-                            <div class="details-icon">👆</div>
-                            <p>Hover over a county to see detailed statistics</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="dashboard-main">
-                    <div class="chart-wrapper">
-                        <div id="scatter-plot"></div>
-                    </div>
-                </div>
-            </div>
+    <!-- The Double Jeopardy Map -->
+    <section id="explorer">
+        <h2>The Double Jeopardy Map</h2>
+        <p>
+            This visualization shows where chronic exposure intersects with acute events. The top-right quadrant—high on both axes—represents America's most vulnerable communities. Use the dropdown below to explore specific states or view the entire nation.
+        </p>
+        
+        <div class="filter-inline">
+            <label for="state-filter">Filter by State:</label>
+            <select id="state-filter">
+                <option value="ALL">All United States</option>
+            </select>
         </div>
+        
+        <div class="chart-container-scatter">
+            <div id="scatter-plot"></div>
+        </div>
+        
+        <div id="details-panel" class="details-panel-inline">
+            <p class="details-hint">Hover over a county to see detailed statistics</p>
+        </div>
+        
+        <p>
+            Notice the geographic pattern: <strong>68% of Double Jeopardy counties are in the Western United States</strong>. California alone contains 12 of the 37 (32%). This concentration tells us exactly where federal intervention would have the highest impact per dollar invested. The intersection of geographic air basins (valleys that trap pollution) with climate-driven events (wildfires, extreme heat) creates this regional crisis.
+        </p>
     </section>
 
-    <!-- The Double Jeopardy Counties -->
-    <section class="section section-dj-list">
-        <div class="container">
-            <h2 class="section-title centered">The 37 Counties in Double Jeopardy</h2>
-            <p class="section-description centered">These communities face the highest combined risk—chronic daily pollution compounded by severe acute events.</p>
-            
-            <!-- Why This List Matters -->
-            <div class="why-matters-section">
-                <h3 class="why-matters-title">Why This List Transforms Data Into Action</h3>
-                <p class="why-matters-intro">By isolating these specific 37 counties, we move from general awareness to <strong>targeted, high-ROI intervention</strong>. Every county below represents a community where standard pollution control measures aren't enough—they need <em>Double Jeopardy protocols</em>.</p>
-                
-                <div class="intervention-preview">
-                    <div class="intervention-preview-item">
-                        <div class="intervention-preview-number">1</div>
-                        <div class="intervention-preview-content">
-                            <strong>Health departments</strong> can prioritize these counties for respiratory clinic expansion and subsidized medication programs
-                        </div>
-                    </div>
-                    <div class="intervention-preview-item">
-                        <div class="intervention-preview-number">2</div>
-                        <div class="intervention-preview-content">
-                            <strong>Urban planners</strong> know exactly where to deploy green infrastructure for maximum health impact
-                        </div>
-                    </div>
-                    <div class="intervention-preview-item">
-                        <div class="intervention-preview-number">3</div>
-                        <div class="intervention-preview-content">
-                            <strong>Emergency services</strong> can justify permanent monitoring infrastructure instead of temporary solutions
-                        </div>
-                    </div>
-                    <div class="intervention-preview-item">
-                        <div class="intervention-preview-number">4</div>
-                        <div class="intervention-preview-content">
-                            <strong>Insurance companies</strong> can model climate health risk with precision, not guesswork
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Basket Analysis Visualization -->
-            <div class="basket-analysis-container">
-                <div class="basket-controls">
-                    <h3>Explore Double Jeopardy Counties</h3>
-                    <p class="basket-description">This basket analysis groups the 37 counties by state, showing the size of their health burden. Larger circles = higher combined risk.</p>
-                    <div class="basket-filter-group">
-                        <label>Filter by State</label>
-                        <select id="basket-state-filter" class="basket-select">
-                            <option value="ALL">All States</option>
-                        </select>
-                    </div>
-                    <div class="basket-stats">
-                        <div class="basket-stat-item">
-                            <div class="basket-stat-number" id="basket-total">37</div>
-                            <div class="basket-stat-label">Total Counties</div>
-                        </div>
-                        <div class="basket-stat-item">
-                            <div class="basket-stat-number" id="basket-states">13</div>
-                            <div class="basket-stat-label">Affected States</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="basket-visualization">
-                    <div id="basket-chart"></div>
-                </div>
-            </div>
-            
-            <div class="data-insight-footer">
-                <p><strong>📍 Geographic Concentration:</strong> Notice the clustering—California alone contains 12 of the 37 Double Jeopardy counties (32%). This isn't coincidence. It's the intersection of <em>geographic air basins</em> (valleys that trap pollution) with <em>climate-driven events</em> (wildfires, extreme heat). The Central Valley and Southern California basin are particularly affected.</p>
-                <p><strong>📈 Persistence Over Time:</strong> Our 5-year analysis reveals these aren't one-time anomalies. These 37 counties consistently appear in the top 10% for both chronic and acute metrics year after year, proving this is a <em>structural problem</em> requiring structural solutions, not seasonal Band-Aids.</p>
-                <p><strong>🎯 The Western Crisis:</strong> Of the 37 Double Jeopardy counties, 25 (68%) are in the Western United States. This concentration tells us where federal intervention would have the highest impact per dollar invested.</p>
-            </div>
+    <!-- Basket Analysis -->
+    <section>
+        <h2>The 37 Counties: A Basket Analysis</h2>
+        <p>
+            By isolating these specific 37 counties, we move from general awareness to <em>targeted, high-ROI intervention</em>. Every county in this visualization represents a community where standard pollution control measures aren't enough—they need Double Jeopardy protocols.
+        </p>
+        <p>
+            The size of each circle represents the combined health burden (chronic exposure + acute events). Larger circles indicate counties facing the most severe compounded risk. Use the filter below to explore specific states.
+        </p>
+        
+        <div class="filter-inline">
+            <label for="basket-state-filter">Filter by State:</label>
+            <select id="basket-state-filter">
+                <option value="ALL">All States</option>
+            </select>
         </div>
+        
+        <div class="chart-container">
+            <div id="basket-chart"></div>
+        </div>
+        
+        <p>
+            California's dominance in this list (12 counties, 32%) reveals a regional crisis. The Central Valley's geographic bowl effect combines with wildfire-prone climate to create persistent Double Jeopardy conditions. Texas follows with 5 counties, concentrated in areas with both industrial pollution and extreme weather events.
+        </p>
     </section>
 
     <!-- Action Plan -->

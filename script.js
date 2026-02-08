@@ -410,10 +410,7 @@ function updateDetailsPanel(data) {
 function resetDetailsPanel() {
     const panel = document.getElementById('details-panel');
     panel.innerHTML = `
-        <div class="details-placeholder">
-            <div class="details-icon">👆</div>
-            <p>Hover over a county to see detailed statistics</p>
-        </div>
+        <p class="details-hint">Hover over a county to see detailed statistics</p>
     `;
 }
 
